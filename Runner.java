@@ -1,7 +1,6 @@
-import java.io.IOException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Scanner;
+
 
 /**
 * Bayou
@@ -10,73 +9,90 @@ import java.util.HashMap;
 
 public class Runner
 {
-	private static int startingPort = 9000;
+	private static Integer unusedPort = 9000;
 	private final static String scriptName = "sample_script";
-	private static HashMap<Integer, Integer> serverPorts = new HashMap<Integer, Integer>();
+	private static HashMap<Integer, Integer> serverPorts = new HashMap<Integer, Integer>();	//maps Integers to ports ie {0 : 9000}
 	private static HashMap<Integer, Client> clients = new HashMap<Integer, Client>();
+	private static HashMap<Integer, Server> servers = new HashMap<Integer, Server>();
+	private static boolean paused = false;
 	
 	public static void main(String[] args)
 	{
 		System.out.println("Hello Chao.  Welcome to Bayou.");
+		Scanner input = new Scanner(System.in);
+		while(true)
+		{
+			if(!input.hasNext())
+				break;
+			String[] cmdArgs = input.nextLine().split(" ");
+			if(cmdArgs[0].equals("startClient"))
+				startClient(Integer.parseInt(cmdArgs[1]), Integer.parseInt(cmdArgs[2]));
+			if(cmdArgs[0].equals("join"))
+				join(Integer.parseInt(cmdArgs[1]));
+			if(cmdArgs[0].equals("user"))
+				clients.get(cmdArgs[1]).userRequest(cmdArgs);
+		}
 	}
 	
-	private void startClient(Integer cID, Integer server)
+	private static void startClient(Integer cID, Integer server)
 	{
-		Client client = new Client(serverPorts.get(server));
+		System.out.println("wtf");
+		Client client = new Client(cID, serverPorts.get(server));
 		clients.put(cID, client);
 	}
 	
-	private void join(Integer sID)
+	private static void join(Integer sID)
+	{
+		servers.put(unusedPort, new Server(unusedPort));
+		serverPorts.put(sID, unusedPort++);
+	}
+	
+	private static void clientDisconnect(Integer cID)
 	{
 		//TODO
 	}
 	
-	private void clientDisconnect(Integer cID)
+	private static void clientReconnect(Integer cID, Integer sID)
 	{
 		//TODO
 	}
 	
-	private void clientReconnect(Integer cID, Integer sID)
+	private static void pause()
 	{
 		//TODO
 	}
 	
-	private void pause()
+	private static void printLogs()
 	{
 		//TODO
 	}
 	
-	private void printLogs()
+	private static void printLog(Integer sID)
 	{
 		//TODO
 	}
 	
-	private void printLog(Integer sID)
+	private static void isolate(Integer sID)
 	{
 		//TODO
 	}
 	
-	private void isolate(Integer sID)
+	private static void reconnect(Integer sID)
 	{
 		//TODO
 	}
 	
-	private void reconnect(Integer sID)
+	private static void breakConnection(Integer sA, Integer sB)
 	{
 		//TODO
 	}
 	
-	private void breakConnection(Integer sA, Integer sB)
+	private static void recoverConnection(Integer sA, Integer sB)
 	{
 		//TODO
 	}
 	
-	private void recoverConnection(Integer sA, Integer sB)
-	{
-		//TODO
-	}
-	
-	private void leave(Integer sID)
+	private static void leave(Integer sID)
 	{
 		//TODO
 	}
