@@ -1,0 +1,5 @@
+Delay between commands: 5000
+
+PROGRAMMER MODE
+join 0
+startClient Joe 0
