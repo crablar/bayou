@@ -13,13 +13,12 @@ public class ReplicaThread extends Thread {
 	{
 		server = serv;
 		this.sock = sock;
-		System.out.println("Replica starting");
 		start();
 	}
 	
 	public void run()
 	{
-		
+		System.out.println("Replica running");
 		BufferedReader in;
 		try
 		{
@@ -27,6 +26,7 @@ public class ReplicaThread extends Thread {
 			String inputMsg;
 			while((inputMsg = in.readLine()) != null)
 			{
+				System.out.println("somethings");
 				System.out.println(inputMsg);
 			}
 		} catch (IOException e)

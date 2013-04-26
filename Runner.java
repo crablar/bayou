@@ -1,3 +1,5 @@
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Scanner;
 
@@ -10,33 +12,52 @@ import java.util.Scanner;
 public class Runner
 {
 	private static Integer unusedPort = 9000;
-	private final static String scriptName = "sample_script";
+	private static boolean scriptMode = false;
 	private static HashMap<Integer, Integer> serverPorts = new HashMap<Integer, Integer>();	//maps Integers to ports ie {0 : 9000}
 	private static HashMap<Integer, Client> clients = new HashMap<Integer, Client>();
 	private static HashMap<Integer, Server> servers = new HashMap<Integer, Server>();
 	private static boolean paused = false;
+	private static long delay_interval = 1000;
 	
 	public static void main(String[] args)
 	{
 		System.out.println("Hello Chao.  Welcome to Bayou.");
-		Scanner input = new Scanner(System.in);
+		Scanner input = null;
+		if(args == null)
+			input = new Scanner(System.in);
+		else
+		{
+			try 
+			{
+				input = new Scanner(new File(args[0]));
+				scriptMode = true;
+			} catch (FileNotFoundException e)
+			{
+				e.printStackTrace();
+			}
+		}
 		while(true)
 		{
 			if(!input.hasNext())
 				break;
-			String[] cmdArgs = input.nextLine().split(" ");
+			delay();
+			String command = input.nextLine();
+			String[] cmdArgs = command.split(" ");
+			if(scriptMode)
+				System.out.println(command);
 			if(cmdArgs[0].equals("startClient"))
 				startClient(Integer.parseInt(cmdArgs[1]), Integer.parseInt(cmdArgs[2]));
 			if(cmdArgs[0].equals("join"))
 				join(Integer.parseInt(cmdArgs[1]));
 			if(cmdArgs[0].equals("user"))
 				clients.get(cmdArgs[1]).userRequest(cmdArgs);
+			if(cmdArgs[0].equals("quit"))
+				System.exit(0);
 		}
 	}
 	
 	private static void startClient(Integer cID, Integer server)
 	{
-		System.out.println("wtf");
 		Client client = new Client(cID, serverPorts.get(server));
 		clients.put(cID, client);
 	}
@@ -96,4 +117,11 @@ public class Runner
 	{
 		//TODO
 	}
+	
+	private static void delay()
+	{
+		long t = System.currentTimeMillis();
+		while(System.currentTimeMillis() - delay_interval < t);
+	}
+	
 }

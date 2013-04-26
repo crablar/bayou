@@ -14,7 +14,6 @@ public class Client {
 	public Client(Integer cID, Integer port)
 	{
 		this.cID = cID;
-		System.out.println("creating client");
 		try
 		{
 			Socket sock = new Socket("localhost", port);

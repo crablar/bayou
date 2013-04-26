@@ -40,14 +40,12 @@ public class Server {
 
 	private void listen()
 	{
-		System.out.println("listen entered");
 		while(true)
 		{
 			Socket sock;
 			try
 			{
 				sock = recvsock.accept();
-				System.out.println("socket accepted");
 				PrintWriter dout = new PrintWriter(sock.getOutputStream(), true);
 				ostreams.put(sock, dout);
 				new ReplicaThread(this, sock);
