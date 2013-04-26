@@ -64,5 +64,9 @@ public class Client {
 	{
 		return "Client ID: " + cID;
 	}
+
+	public void disconnect() {
+		//TODO
+	}
 	
 }

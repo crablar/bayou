@@ -13,17 +13,16 @@ public class ReplicaThread extends Thread {
 	{
 		server = serv;
 		this.sock = sock;
+		System.out.println("Socket is: " + sock);
 		start();
 	}
 	
 	public void run()
 	{
-		BufferedReader in;
 		try
 		{
-			in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+			BufferedReader in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
 			String inputMsg;
-			System.out.println("somethings");
 			while((inputMsg = in.readLine()) != null)
 			{
 				System.out.println(inputMsg);

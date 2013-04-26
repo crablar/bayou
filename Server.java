@@ -11,7 +11,8 @@ public class Server {
 	private ServerSocket recvsock;
 	private HashMap<Socket, PrintWriter> ostreams;
 	private HashMap<String, String> playList;
-	private HashMap<Integer, Integer> versionVector;
+	private HashMap<Integer, Integer> versionVector;	//Make this a separate data structure?
+	private Log log;
 	
 	public Server(int port)
 	{
@@ -90,6 +91,10 @@ public class Server {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	public void printLog() {
+		//TODO
 	}
 	
 }

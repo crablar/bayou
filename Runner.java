@@ -5,24 +5,23 @@ import java.util.Scanner;
 
 
 /**
-* Bayou
-* @author Jeff
+* A Runner that handles input
 */
 
 public class Runner
 {
-	private static Integer unusedPort = 9000;
-	private static boolean scriptMode = false;
+	private static Integer unusedPort = 9000;						
+	private static boolean scriptMode = false;												
 	private static HashMap<Integer, Integer> serverPorts = new HashMap<Integer, Integer>();	//maps Integers to ports ie {0 : 9000}
 	private static HashMap<Integer, Client> clients = new HashMap<Integer, Client>();
 	private static HashMap<Integer, Server> servers = new HashMap<Integer, Server>();
 	private static boolean paused = false;
 	private static long delay_interval = 100;
+	private static Scanner scanner = null;
 	
 	public static void main(String[] args)
 	{
 		System.out.println("Hello Chao.  Welcome to Bayou.");
-		Scanner scanner = null;
 		if(args == null)
 			scanner = new Scanner(System.in);
 		else
@@ -36,32 +35,7 @@ public class Runner
 				e.printStackTrace();
 			}
 		}
-		while(true)
-		{
-			if(!scanner.hasNext())
-				break;
-			delay();
-			String command = scanner.nextLine();
-			String[] cmdArgs = command.split(" ");
-			if(scriptMode)
-				System.out.println(command);
-			if(cmdArgs[0].equals("startClient"))
-				startClient(Integer.parseInt(cmdArgs[1]), Integer.parseInt(cmdArgs[2]));
-			if(cmdArgs[0].equals("join"))
-				join(Integer.parseInt(cmdArgs[1]));
-			if(cmdArgs[0].equals("user"))
-			{
-				clients.get(Integer.parseInt(cmdArgs[1])).userRequest(cmdArgs);
-			}
-			if(cmdArgs[0].equals("pause"))
-				paused = true;
-			if(cmdArgs[0].equals("continue"))
-				paused = false;
-			if(cmdArgs[0].equals("quit"))
-				System.exit(0);
-			if(cmdArgs[0].equals("switch to console mode"))
-				scanner = new Scanner(System.in);
-		}
+		run();
 	}
 	
 	private static void startClient(Integer cID, Integer server)
@@ -78,7 +52,7 @@ public class Runner
 	
 	private static void clientDisconnect(Integer cID)
 	{
-		//TODO
+		clients.get(cID).disconnect();
 	}
 	
 	private static void clientReconnect(Integer cID, Integer sID)
@@ -86,14 +60,9 @@ public class Runner
 		//TODO
 	}
 	
-	private static void printLogs()
-	{
-		//TODO
-	}
-	
 	private static void printLog(Integer sID)
 	{
-		//TODO
+		servers.get(sID).printLog();
 	}
 	
 	private static void isolate(Integer sID)
@@ -125,6 +94,53 @@ public class Runner
 	{
 		long t = System.currentTimeMillis();
 		while(System.currentTimeMillis() - delay_interval < t);
+	}
+	
+	private static void run()
+	{
+		while(true)
+		{
+			if(!scanner.hasNext())
+				break;
+			delay();
+			String command = scanner.nextLine();
+			String[] cmdArgs = command.split(" ");
+			if(scriptMode)
+				System.out.println("SCRIPT: " + command);
+			if(cmdArgs[0].equals("user"))
+				clients.get(Integer.parseInt(cmdArgs[1])).userRequest(cmdArgs);
+			if(cmdArgs[0].equals("startClient"))
+				startClient(Integer.parseInt(cmdArgs[1]), Integer.parseInt(cmdArgs[2]));
+			if(cmdArgs[0].equals("join"))
+				join(Integer.parseInt(cmdArgs[1]));
+			if(cmdArgs[0].equals("clientDisconnect"))
+				clientDisconnect(Integer.parseInt(cmdArgs[1]));
+			if(cmdArgs[0].equals("clientReconnect"))
+				clientReconnect(Integer.parseInt(cmdArgs[1]), Integer.parseInt(cmdArgs[2]));
+			if(cmdArgs[0].equals("printLog"))
+				printLog(Integer.parseInt(cmdArgs[1]));
+			if(cmdArgs[0].equals("printLogs"))
+				for(Integer sID : servers.keySet())
+					printLog(sID);
+			if(cmdArgs[0].equals("isolate"))
+				isolate(Integer.parseInt(cmdArgs[1]));
+			if(cmdArgs[0].equals("leave"))
+				leave(Integer.parseInt(cmdArgs[1]));
+			if(cmdArgs[0].equals("reconnect"))
+				reconnect(Integer.parseInt(cmdArgs[1]));
+			if(cmdArgs[0].equals("breakConnection"))
+				breakConnection(Integer.parseInt(cmdArgs[1]), Integer.parseInt(cmdArgs[2]));
+			if(cmdArgs[0].equals("recoverConnection"))
+				recoverConnection(Integer.parseInt(cmdArgs[1]), Integer.parseInt(cmdArgs[2]));
+			if(cmdArgs[0].equals("pause"))
+				paused = true;
+			if(cmdArgs[0].equals("continue"))
+				paused = false;
+			if(cmdArgs[0].equals("quit"))
+				System.exit(0);
+			if(cmdArgs[0].equals("switch to console mode"))
+				scanner = new Scanner(System.in);
+		}
 	}
 	
 }
