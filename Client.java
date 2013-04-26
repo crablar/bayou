@@ -9,15 +9,13 @@ public class Client {
 	
 	private Integer cID;
 	private Socket sock;					//client is only connected to one server at a time
-	private BufferedReader sockReader;
 	
 	public Client(Integer cID, Integer port)
 	{
 		this.cID = cID;
 		try
 		{
-			Socket sock = new Socket("localhost", port);
-			sockReader = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+			sock = new Socket("localhost", port);
 		}
 		catch(SocketException e)
 		{
@@ -58,7 +56,13 @@ public class Client {
 		catch (IOException e) 
 		{
 			e.printStackTrace();
+			System.exit(0);
 		}
+	}
+	
+	public String toString()
+	{
+		return "Client ID: " + cID;
 	}
 	
 }

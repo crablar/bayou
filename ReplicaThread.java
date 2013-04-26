@@ -18,15 +18,14 @@ public class ReplicaThread extends Thread {
 	
 	public void run()
 	{
-		System.out.println("Replica running");
 		BufferedReader in;
 		try
 		{
 			in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
 			String inputMsg;
+			System.out.println("somethings");
 			while((inputMsg = in.readLine()) != null)
 			{
-				System.out.println("somethings");
 				System.out.println(inputMsg);
 			}
 		} catch (IOException e)

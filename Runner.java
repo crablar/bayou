@@ -17,19 +17,19 @@ public class Runner
 	private static HashMap<Integer, Client> clients = new HashMap<Integer, Client>();
 	private static HashMap<Integer, Server> servers = new HashMap<Integer, Server>();
 	private static boolean paused = false;
-	private static long delay_interval = 1000;
+	private static long delay_interval = 100;
 	
 	public static void main(String[] args)
 	{
 		System.out.println("Hello Chao.  Welcome to Bayou.");
-		Scanner input = null;
+		Scanner scanner = null;
 		if(args == null)
-			input = new Scanner(System.in);
+			scanner = new Scanner(System.in);
 		else
 		{
 			try 
 			{
-				input = new Scanner(new File(args[0]));
+				scanner = new Scanner(new File(args[0]));
 				scriptMode = true;
 			} catch (FileNotFoundException e)
 			{
@@ -38,10 +38,10 @@ public class Runner
 		}
 		while(true)
 		{
-			if(!input.hasNext())
+			if(!scanner.hasNext())
 				break;
 			delay();
-			String command = input.nextLine();
+			String command = scanner.nextLine();
 			String[] cmdArgs = command.split(" ");
 			if(scriptMode)
 				System.out.println(command);
@@ -50,9 +50,17 @@ public class Runner
 			if(cmdArgs[0].equals("join"))
 				join(Integer.parseInt(cmdArgs[1]));
 			if(cmdArgs[0].equals("user"))
-				clients.get(cmdArgs[1]).userRequest(cmdArgs);
+			{
+				clients.get(Integer.parseInt(cmdArgs[1])).userRequest(cmdArgs);
+			}
+			if(cmdArgs[0].equals("pause"))
+				paused = true;
+			if(cmdArgs[0].equals("continue"))
+				paused = false;
 			if(cmdArgs[0].equals("quit"))
 				System.exit(0);
+			if(cmdArgs[0].equals("switch to console mode"))
+				scanner = new Scanner(System.in);
 		}
 	}
 	
@@ -74,11 +82,6 @@ public class Runner
 	}
 	
 	private static void clientReconnect(Integer cID, Integer sID)
-	{
-		//TODO
-	}
-	
-	private static void pause()
 	{
 		//TODO
 	}
