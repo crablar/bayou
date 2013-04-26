@@ -2,7 +2,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -10,6 +10,7 @@ import java.util.HashMap;
 public class Server {
 
 	private ServerSocket recvsock;
+	private ArrayList<Socket> socks;
 	private HashMap<Socket, PrintWriter> ostreams;
 	private HashMap<String, String> playList;
 	private HashMap<Integer, Integer> versionVector;	//Make this a separate data structure?
@@ -17,6 +18,7 @@ public class Server {
 	
 	public Server(int port)
 	{
+		socks = new ArrayList<Socket>();
 		ostreams = new HashMap<Socket, PrintWriter>();
 		playList = new HashMap<String, String>();
 		versionVector = new HashMap<Integer, Integer>();
@@ -42,7 +44,14 @@ public class Server {
 	
 	public void connectToServer(int port)
 	{
-		//TODO
+		try {
+			Socket sock = new Socket("localhost", port);
+			System.out.println("TODO: connect to server");
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void listen()

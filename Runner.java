@@ -90,9 +90,7 @@ public class Runner
 	{
 		if(sIDA == sIDB)
 			return;
-		Server sA = servers.get(sIDA);
-		Server sB = servers.get(sIDB);
-		
+		servers.get(sIDA).connectToServer(serverPorts.get(sIDB));
 	}
 	
 	private static void leave(Integer sID)
