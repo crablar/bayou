@@ -12,9 +12,9 @@ public class Runner
 {
 	private static Integer unusedPort = 9000;						
 	private static boolean scriptMode = false;												
-	private static HashMap<Integer, Integer> serverPorts = new HashMap<Integer, Integer>();	//maps Integers to ports ie {0 : 9000}
+	private static HashMap<Integer, Integer> serverPorts = new HashMap<Integer, Integer>();	//maps sIDs to ports ie {0 : 9000}
 	private static HashMap<Integer, Client> clients = new HashMap<Integer, Client>();
-	private static HashMap<Integer, Server> servers = new HashMap<Integer, Server>();
+	private static HashMap<Integer, Server> servers = new HashMap<Integer, Server>();			//maps sIDs to Servers
 	private static boolean paused = false;
 	private static long delay_interval = 100;
 	private static Scanner scanner = null;
@@ -22,6 +22,10 @@ public class Runner
 	public static void main(String[] args)
 	{
 		System.out.println("Hello Chao.  Welcome to Bayou.");
+		
+		args = new String[1];		// for use in
+		args[0] = "servertest_script";	// Eclipse
+		
 		if(args == null)
 			scanner = new Scanner(System.in);
 		else
@@ -38,15 +42,17 @@ public class Runner
 		run();
 	}
 	
-	private static void startClient(Integer cID, Integer server)
+	private static void startClient(Integer cID, Integer sID)
 	{
-		Client client = new Client(cID, serverPorts.get(server));
+		Client client = new Client(cID, serverPorts.get(sID));
 		clients.put(cID, client);
 	}
 	
 	private static void join(Integer sID)
 	{
-		servers.put(unusedPort, new Server(unusedPort));
+		servers.put(sID, new Server(unusedPort));
+		for(Integer otherID : servers.keySet())
+			recoverConnection(sID, otherID);
 		serverPorts.put(sID, unusedPort++);
 	}
 	
@@ -80,9 +86,13 @@ public class Runner
 		//TODO
 	}
 	
-	private static void recoverConnection(Integer sA, Integer sB)
+	private static void recoverConnection(Integer sIDA, Integer sIDB)
 	{
-		//TODO
+		if(sIDA == sIDB)
+			return;
+		Server sA = servers.get(sIDA);
+		Server sB = servers.get(sIDB);
+		
 	}
 	
 	private static void leave(Integer sID)
@@ -94,6 +104,11 @@ public class Runner
 	{
 		long t = System.currentTimeMillis();
 		while(System.currentTimeMillis() - delay_interval < t);
+	}
+	
+	private static void quit()
+	{
+		System.exit(0);
 	}
 	
 	private static void run()
@@ -109,36 +124,36 @@ public class Runner
 				System.out.println("SCRIPT: " + command);
 			if(cmdArgs[0].equals("user"))
 				clients.get(Integer.parseInt(cmdArgs[1])).userRequest(cmdArgs);
-			if(cmdArgs[0].equals("startClient"))
+			else if(cmdArgs[0].equals("startClient"))
 				startClient(Integer.parseInt(cmdArgs[1]), Integer.parseInt(cmdArgs[2]));
-			if(cmdArgs[0].equals("join"))
+			else if(cmdArgs[0].equals("join"))
 				join(Integer.parseInt(cmdArgs[1]));
-			if(cmdArgs[0].equals("clientDisconnect"))
+			else if(cmdArgs[0].equals("clientDisconnect"))
 				clientDisconnect(Integer.parseInt(cmdArgs[1]));
-			if(cmdArgs[0].equals("clientReconnect"))
+			else if(cmdArgs[0].equals("clientReconnect"))
 				clientReconnect(Integer.parseInt(cmdArgs[1]), Integer.parseInt(cmdArgs[2]));
-			if(cmdArgs[0].equals("printLog"))
+			else if(cmdArgs[0].equals("printLog"))
 				printLog(Integer.parseInt(cmdArgs[1]));
-			if(cmdArgs[0].equals("printLogs"))
+			else if(cmdArgs[0].equals("printLogs"))
 				for(Integer sID : servers.keySet())
 					printLog(sID);
-			if(cmdArgs[0].equals("isolate"))
+			else if(cmdArgs[0].equals("isolate"))
 				isolate(Integer.parseInt(cmdArgs[1]));
-			if(cmdArgs[0].equals("leave"))
+			else if(cmdArgs[0].equals("leave"))
 				leave(Integer.parseInt(cmdArgs[1]));
-			if(cmdArgs[0].equals("reconnect"))
+			else if(cmdArgs[0].equals("reconnect"))
 				reconnect(Integer.parseInt(cmdArgs[1]));
-			if(cmdArgs[0].equals("breakConnection"))
+			else if(cmdArgs[0].equals("breakConnection"))
 				breakConnection(Integer.parseInt(cmdArgs[1]), Integer.parseInt(cmdArgs[2]));
-			if(cmdArgs[0].equals("recoverConnection"))
+			else if(cmdArgs[0].equals("recoverConnection"))
 				recoverConnection(Integer.parseInt(cmdArgs[1]), Integer.parseInt(cmdArgs[2]));
-			if(cmdArgs[0].equals("pause"))
+			else if(cmdArgs[0].equals("pause"))
 				paused = true;
-			if(cmdArgs[0].equals("continue"))
+			else if(cmdArgs[0].equals("continue"))
 				paused = false;
-			if(cmdArgs[0].equals("quit"))
-				System.exit(0);
-			if(cmdArgs[0].equals("switch to console mode"))
+			else if(cmdArgs[0].equals("quit"))
+				quit();
+			else if(cmdArgs[0].equals("switch to console mode"))
 				scanner = new Scanner(System.in);
 		}
 	}

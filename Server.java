@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -37,6 +38,11 @@ public class Server {
 		};
 		Thread listenThread = new Thread(listener);	//this is janky but necessary to cede control to Runner
 		listenThread.start();
+	}
+	
+	public void connectToServer(int port)
+	{
+		//TODO
 	}
 
 	private void listen()
@@ -74,27 +80,26 @@ public class Server {
 		try 
 		{
 			recvsock.close();
-		}
-		catch (IOException e1) 
-		{
-			e1.printStackTrace();
-		}
-		for(Socket sock : ostreams.keySet())
-		{
-			ostreams.get(sock).close();
-			try 
+			for(Socket sock : ostreams.keySet())
 			{
+				ostreams.get(sock).close();
 				sock.close();
-			} 
-			catch (IOException e) 
-			{
-				e.printStackTrace();
 			}
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
 		}
 	}
 
 	public void printLog() {
 		//TODO
+	}
+
+	public void handleReplicaMessage(String msg)
+	{
+		if(msg != null)
+			System.out.println(msg);
 	}
 	
 }

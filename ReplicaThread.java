@@ -3,6 +3,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 
+/**
+ * A thread that is created whenever a Server accepts a new Socket connection
+ * 
+ * @author jam4879
+ *
+ */
 
 public class ReplicaThread extends Thread {
 	
@@ -13,7 +19,6 @@ public class ReplicaThread extends Thread {
 	{
 		server = serv;
 		this.sock = sock;
-		System.out.println("Socket is: " + sock);
 		start();
 	}
 	
@@ -22,12 +27,13 @@ public class ReplicaThread extends Thread {
 		try
 		{
 			BufferedReader in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-			String inputMsg;
-			while((inputMsg = in.readLine()) != null)
+			String line;
+			while((line = in.readLine()) != null)
 			{
-				System.out.println(inputMsg);
+				server.handleReplicaMessage(line);
 			}
-		} catch (IOException e)
+		}
+		catch (IOException e)
 		{
 			e.printStackTrace();
 		}
