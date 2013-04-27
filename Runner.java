@@ -50,7 +50,7 @@ public class Runner
 	
 	private static void join(Integer sID)
 	{
-		servers.put(sID, new Server(unusedPort));
+		servers.put(sID, new Server(sID, unusedPort));
 		serverPorts.put(sID, unusedPort++);
 		for(Integer otherID : servers.keySet())
 			recoverConnection(otherID, sID);
@@ -92,6 +92,8 @@ public class Runner
 			return;
 		print("recovering " + serverPorts.get(sIDA) + " and " + serverPorts.get(sIDB));
 		servers.get(sIDA).connectToServer(serverPorts.get(sIDB));
+		servers.get(sIDB).connectToServer(serverPorts.get(sIDA));
+
 	}
 	
 	private static void leave(Integer sID)

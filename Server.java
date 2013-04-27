@@ -11,24 +11,28 @@ import java.util.HashMap;
 
 public class Server {
 
-	private int port;
-	private ServerSocket recvsock;
-	private ArrayList<Socket> socks;
+	private int sID;									//the server ID
+	private int port;									//this server's port number
+	private Socket sendsock;							//the socket used for connecting and sending to this server
+	private ServerSocket recvsock;						//socket to accept replica and client connections
+	private ArrayList<Socket> socks;					//list of replica sockets
 	private HashMap<Socket, PrintWriter> ostreams;
 	private HashMap<String, String> playList;
-	private HashMap<Integer, Integer> versionVector;	//Make this a separate data structure?
-	private Log log;
+	private VersionVector versionVector;
+	private Log writeLog;
 	
-	public Server(int p)
+	public Server(int p, int sID)
 	{
+		this.sID = sID;
 		port = p;
 		socks = new ArrayList<Socket>();
 		ostreams = new HashMap<Socket, PrintWriter>();
 		playList = new HashMap<String, String>();
-		versionVector = new HashMap<Integer, Integer>();
+		versionVector = new VersionVector();
 		try
 		{
 			recvsock = new ServerSocket(port);
+			recvsock.setReuseAddress(true);
 			addShutdownHooks(this);
 		}
 		catch(IOException e)
@@ -49,11 +53,10 @@ public class Server {
 	public void connectToServer(int otherPort)
 	{
 		try {
-			Socket sock = new Socket();
-			sock.connect(new InetSocketAddress(InetAddress.getLocalHost(), otherPort));
+			sendsock = new Socket();
+			sendsock.connect(new InetSocketAddress(InetAddress.getLocalHost(), otherPort));
 			System.out.println(this + ": connect to server " + otherPort);
-			ostreams.put(sock,  new PrintWriter(sock.getOutputStream()));
-			ostreams.get(sock).write(this + ": requesting ACK from " + otherPort);
+			sendsock.getOutputStream().write((this + ": requesting ACK from " + otherPort).getBytes());
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -68,6 +71,7 @@ public class Server {
 			Socket sock;
 			try
 			{
+				System.out.println(this + " is waiting for connections");
 				sock = recvsock.accept();
 				if(port == sock.getLocalPort())
 					continue;

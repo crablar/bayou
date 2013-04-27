@@ -19,6 +19,7 @@ public class ReplicaThread extends Thread {
 	{
 		server = serv;
 		this.sock = sock;
+		System.out.println("starting ReplicaThread for " + server + ", listening to " + sock.getPort());
 		start();
 	}
 	
