@@ -31,8 +31,8 @@ public class Server {
 		versionVector = new VersionVector();
 		try
 		{
+			System.out.println("port is " + port);
 			recvsock = new ServerSocket(port);
-			recvsock.setReuseAddress(true);
 			addShutdownHooks(this);
 		}
 		catch(IOException e)

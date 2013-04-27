@@ -50,7 +50,7 @@ public class Runner
 	
 	private static void join(Integer sID)
 	{
-		servers.put(sID, new Server(sID, unusedPort));
+		servers.put(sID, new Server(unusedPort, sID));
 		serverPorts.put(sID, unusedPort++);
 		for(Integer otherID : servers.keySet())
 			recoverConnection(otherID, sID);

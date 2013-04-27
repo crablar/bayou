@@ -1,24 +1,34 @@
+import java.util.Comparator;
 import java.util.TreeSet;
+
+/**
+ * A Log of writes, where each write is a 3-tuple of {acceptTime, replicaID, userOp}
+ * @author jam4879
+ *
+ */
 
 public class Log 
 {
 	
-	private TreeSet<String> writes;
+	private TreeSet<String[]> writes;
 	
 	public Log()
 	{
-		writes = new TreeSet<String>(new Comparator<String>()
+		writes = new TreeSet<String[]>(new Comparator<String[]>()
 		{
-			public int compare(String a, String b)
+			public int compare(String[] a, String[] b)
 			{
-				return a.split(" ")[0].parseInt() - b.split(" ")[0].parseInt();
-			}}
-		);
+				return Integer.parseInt(a[0]) - Integer.parseInt(b[0]);
+			}});
 	}
 	
-	public void log(String write) 
+	/**
+	 * Log a 3-tuple of {acceptTime, replicaID, userOp}
+	 * @param write
+	 */
+	public void log(String[] write) 
 	{
-		
+		writes.add(write);
 	}
 	
 	public String toString()
