@@ -56,7 +56,11 @@ public class Server {
 			sendsock = new Socket();
 			sendsock.connect(new InetSocketAddress(InetAddress.getLocalHost(), otherPort));
 			System.out.println(this + ": connect to server " + otherPort);
-			sendsock.getOutputStream().write((this + ": requesting ACK from " + otherPort).getBytes());
+			PrintWriter dout = new PrintWriter(sendsock.getOutputStream(), true);
+			dout.println("=====> " + this.recvsock.getLocalPort() + ": requesting ACK from " + otherPort);
+
+			//sendsock.getOutputStream().write((this + ": requesting ACK from " + otherPort).getBytes());
+			new ReplicaThread(this, sendsock);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -73,10 +77,11 @@ public class Server {
 			{
 				System.out.println(this + " is waiting for connections");
 				sock = recvsock.accept();
-				if(port == sock.getLocalPort())
-					continue;
+//				if(port == sock.getLocalPort())
+//					continue;
 				System.out.println(this + " receiving connection from " + sock.getLocalPort());
 				PrintWriter dout = new PrintWriter(sock.getOutputStream(), true);
+				dout.println("=======> I am " + recvsock.getLocalPort());
 				ostreams.put(sock, dout);
 				new ReplicaThread(this, sock);
 			}
