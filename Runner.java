@@ -51,9 +51,9 @@ public class Runner
 	private static void join(Integer sID)
 	{
 		servers.put(sID, new Server(unusedPort));
-		for(Integer otherID : servers.keySet())
-			recoverConnection(sID, otherID);
 		serverPorts.put(sID, unusedPort++);
+		for(Integer otherID : servers.keySet())
+			recoverConnection(otherID, sID);
 	}
 	
 	private static void clientDisconnect(Integer cID)
@@ -90,6 +90,7 @@ public class Runner
 	{
 		if(sIDA == sIDB)
 			return;
+		print("recovering " + serverPorts.get(sIDA) + " and " + serverPorts.get(sIDB));
 		servers.get(sIDA).connectToServer(serverPorts.get(sIDB));
 	}
 	
@@ -107,6 +108,11 @@ public class Runner
 	private static void quit()
 	{
 		System.exit(0);
+	}
+	
+	private static void print(String msg)
+	{
+		System.out.println(msg);
 	}
 	
 	private static void run()
