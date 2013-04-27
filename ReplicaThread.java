@@ -25,9 +25,10 @@ public class ReplicaThread extends Thread {
 	
 	public void run()
 	{
+		BufferedReader in = null;
 		try
 		{
-			BufferedReader in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+			in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
 			String line;
 			while((line = in.readLine()) != null)
 			{
@@ -37,6 +38,15 @@ public class ReplicaThread extends Thread {
 		catch (IOException e)
 		{
 			e.printStackTrace();
+		}
+		finally
+		{
+			try {
+				in.close();
+			} catch (NullPointerException | IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 	

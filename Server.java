@@ -4,6 +4,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -77,13 +78,15 @@ public class Server {
 			{
 				System.out.println(this + " is waiting for connections");
 				sock = recvsock.accept();
-//				if(port == sock.getLocalPort())
-//					continue;
-				System.out.println(this + " receiving connection from " + sock.getLocalPort());
+				System.out.println(this + " receiving connection from " + sock.getPort());
 				PrintWriter dout = new PrintWriter(sock.getOutputStream(), true);
 				dout.println("=======> I am " + recvsock.getLocalPort());
 				ostreams.put(sock, dout);
 				new ReplicaThread(this, sock);
+			}
+			catch(SocketException e)
+			{
+				//TODO ???????????????????????
 			}
 			catch(IOException e)
 			{
@@ -114,6 +117,10 @@ public class Server {
 				sock.close();
 			}
 		}
+		catch(SocketException e)
+		{
+			e.printStackTrace();
+		}
 		catch(IOException e)
 		{
 			e.printStackTrace();
@@ -126,6 +133,7 @@ public class Server {
 
 	public void handleReplicaMessage(String msg)
 	{
+		System.out.println("handling a message!");
 		if(msg != null)
 			System.out.println(this + ": " + msg);
 	}

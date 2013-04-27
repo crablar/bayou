@@ -24,7 +24,7 @@ public class Runner
 		System.out.println("Hello Chao.  Welcome to Bayou.");
 		
 		args = new String[1];		// for use in
-		args[0] = "servertest_script";	// Eclipse
+		args[0] = "sample_script";	// Eclipse
 		
 		if(args == null)
 			scanner = new Scanner(System.in);
@@ -92,8 +92,6 @@ public class Runner
 			return;
 		print("recovering " + serverPorts.get(sIDA) + " and " + serverPorts.get(sIDB));
 		servers.get(sIDA).connectToServer(serverPorts.get(sIDB));
-		servers.get(sIDB).connectToServer(serverPorts.get(sIDA));
-
 	}
 	
 	private static void leave(Integer sID)

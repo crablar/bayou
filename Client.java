@@ -1,9 +1,7 @@
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.ArrayList;
 
 public class Client {
 	
@@ -16,6 +14,7 @@ public class Client {
 		try
 		{
 			sock = new Socket("localhost", port);
+			addShutdownHooks(this);
 		}
 		catch(SocketException e)
 		{
@@ -51,7 +50,8 @@ public class Client {
 	{
 		try 
 		{
-			sock.getOutputStream().write(("add " + song + " " + url).getBytes());
+			PrintWriter tester = new PrintWriter(sock.getOutputStream(), true);
+			tester.println(song);
 		}
 		catch (IOException e) 
 		{
@@ -68,4 +68,19 @@ public class Client {
 		//TODO
 	}
 	
+	private void addShutdownHooks(final Client client)
+	{
+		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable()
+		{
+			public void run()
+			{
+				try {
+					sock.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}));
+	}
 }
