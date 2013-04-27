@@ -1,4 +1,6 @@
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
@@ -10,25 +12,25 @@ import java.util.TreeSet;
 public class Log 
 {
 	
-	private TreeSet<String[]> writes;
+	private SortedSet<Write> writes;
 	
 	public Log()
 	{
-		writes = new TreeSet<String[]>(new Comparator<String[]>()
+		writes = Collections.synchronizedSortedSet(new TreeSet<Write>(new Comparator<Write>()
 		{
-			public int compare(String[] a, String[] b)
+			public int compare(Write a, Write b)
 			{
-				return Integer.parseInt(a[0]) - Integer.parseInt(b[0]);
-			}});
+				return (int)(a.time - b.time);
+			}}));
 	}
 	
 	/**
 	 * Log a 3-tuple of {acceptTime, replicaID, userOp}
 	 * @param write
 	 */
-	public void log(String[] write) 
+	public void log(Write w) 
 	{
-		writes.add(write);
+		writes.add(w);
 	}
 	
 	public String toString()
