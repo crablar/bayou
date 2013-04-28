@@ -9,6 +9,12 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * A Bayou replica.
+ * 
+ * @author jam4879
+ *
+ */
 
 public class Server {
 
@@ -17,11 +23,11 @@ public class Server {
 	private Socket sendsock;							//the socket used for connecting and sending to this server
 	private ServerSocket recvsock;						//socket to accept replica and client connections
 	private HashMap<Integer, Socket> socks;				//map of sID -> replica sockets
-	private HashMap<Socket, PrintWriter> ostreams;
+	private HashMap<Socket, PrintWriter> ostreams;		
 	private Playlist playlist;
 	private VersionVector versionVector;
-	private Log writeLog;
-	private Log rollbackLog;
+	private Log tentativeWrites;
+	private Log rollbackLog;							//a log of all writes between 
 	private int csn;
 	private boolean isPrimary;							//says whether this server is the primary
 	
@@ -30,11 +36,12 @@ public class Server {
 	{
 		this.sID = sID;
 		port = p;
+		isPrimary = false;
 		socks = new HashMap<Integer, Socket>();
 		ostreams = new HashMap<Socket, PrintWriter>();
 		playlist = new Playlist();
 		versionVector = new VersionVector();
-		writeLog = new Log();							//the tentative writes to this server
+		tentativeWrites = new Log();							//the tentative writes to this server
 		rollbackLog = new Log();						//the stable writes that this server is aware of
 		try
 		{
@@ -147,7 +154,6 @@ public class Server {
 		//TODO
 	}
 
-
 	
 	public void printForUser(int cID) {
 		
@@ -163,14 +169,17 @@ public class Server {
 		long acceptStamp = System.currentTimeMillis();
 		Write w = new Write(acceptStamp, sID, false, "add " + song + " " + url);
 		versionVector.changeLatestAccept(sID, acceptStamp);
-		writeLog.log(w);
+		tentativeWrites.log(w);
 		playlist.add(song, url);
 	}
 
 
-	public void editPlaylist(String song, String url) {
-		// TODO Auto-generated method stub
-		
+	public synchronized void editPlaylist(String song, String url) {
+		long acceptStamp = System.currentTimeMillis();
+		Write w = new Write(acceptStamp, sID, false, "edit " + song + " " + url);
+		versionVector.changeLatestAccept(sID, acceptStamp);
+		tentativeWrites.log(w);
+		playlist.add(song, url);
 	}
 
 	public void deleteFromPlaylist(String song) {
@@ -189,6 +198,11 @@ public class Server {
 	public synchronized void stabilizeWrites()
 	{
 		
+	}
+
+	public void makePrimary() {
+		isPrimary = true;
+		//TODO
 	}
 	
 }

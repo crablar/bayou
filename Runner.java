@@ -18,6 +18,7 @@ public class Runner
 	private static boolean paused = false;
 	private static long delay_interval = 100;
 	private static Scanner scanner = null;
+	private static int primaryServer = -1;
 	
 	public static void main(String[] args)
 	{
@@ -50,7 +51,13 @@ public class Runner
 	
 	private static void join(Integer sID)
 	{
-		servers.put(sID, new Server(unusedPort, sID));
+		Server s = new Server(unusedPort, sID);
+		if(primaryServer == -1)
+		{
+			primaryServer = sID;
+			s.makePrimary();
+		}
+		servers.put(sID, s);
 		serverPorts.put(sID, unusedPort++);
 
 	}

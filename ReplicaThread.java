@@ -16,9 +16,11 @@ public class ReplicaThread extends Thread {
 	private Server server;
 	private Socket sock;
 	private BufferedReader in;
+	private boolean listeningToClient;
 	
 	public ReplicaThread(Server serv, Socket sock)
 	{
+		listeningToClient = false;
 		in = null;
 		server = serv;
 		this.sock = sock;
@@ -65,6 +67,8 @@ public class ReplicaThread extends Thread {
 			System.out.println(server + " received: " + msg);
 			if(msg.startsWith("print"))
 				server.printForUser(Integer.parseInt(msg.split(" ")[1]));
+			else if(msg.startsWith("I'm a client"))
+				listeningToClient = true;
 			else if(msg.startsWith("server disconnecting"))
 			{
 				System.out.println("ReplicaThread closing connection with " + server);

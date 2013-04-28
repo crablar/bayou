@@ -16,6 +16,7 @@ public class Client {
 			sock = new Socket("localhost", port);
 			addShutdownHooks(this);
 			ostream = new PrintWriter(sock.getOutputStream(), true);
+			ostream.println("I'm a client");
 		} catch (SocketException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -84,6 +85,7 @@ public class Client {
 			try {
 				sock = new Socket("localhost", port);
 				ostream = new PrintWriter(sock.getOutputStream(), true);
+				ostream.println("I'm a client");
 			} catch (SocketException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
