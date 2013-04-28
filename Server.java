@@ -74,6 +74,7 @@ public class Server {
 
 			//sendsock.getOutputStream().write((this + ": requesting ACK from " + otherPort).getBytes());
 			socks.put(otherPort, sendsock);
+			ostreams.put(sendsock, new PrintWriter(sendsock.getOutputStream()));
 			new ReplicaThread(this, sendsock);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
@@ -212,8 +213,7 @@ public class Server {
 	
 	public void sendMessageToServer(int otherPort, String message)
 	{
-		System.out.println(otherPort);
-		System.out.println(ostreams.get(socks.get(otherPort)));
+		System.out.println(message);
 		ostreams.get(socks.get(otherPort)).println(message);
 	}
 	
