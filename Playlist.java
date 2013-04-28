@@ -24,5 +24,13 @@ public class Playlist {
 			result += s + " " + map.get(s) + "\n";
 		return result;
 	}
+
+	public void edit(String song, String url) {
+		map.put(song, url);
+	}
+
+	public void delete(String song) {
+		map.remove(song);
+	}
 	
 }

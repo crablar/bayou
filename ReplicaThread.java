@@ -69,6 +69,8 @@ public class ReplicaThread extends Thread {
 				server.printForUser(Integer.parseInt(msg.split(" ")[1]));
 			else if(msg.startsWith("I'm a client"))
 				listeningToClient = true;
+			else if(msg.startsWith("test connection"))
+					System.out.println(server + " receiving test message from server on port " + sock.getPort());
 			else if(msg.startsWith("server disconnecting"))
 			{
 				System.out.println("ReplicaThread closing connection with " + server);
@@ -83,6 +85,8 @@ public class ReplicaThread extends Thread {
 				in.close();
 				return false;
 			}
+			else if(msg.startsWith("printPlaylist"))
+				server.printForUser(Integer.parseInt(msg.split(" ")[1]));
 		}
 		catch(IOException e)
 		{

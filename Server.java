@@ -26,8 +26,8 @@ public class Server {
 	private HashMap<Socket, PrintWriter> ostreams;		
 	private Playlist playlist;
 	private VersionVector versionVector;
-	private Log tentativeWrites;
-	private Log rollbackLog;							//a log of all writes between 
+	private Log tentativeWrites;						//a log of writes that haven't been committed
+	private Log rollbackLog;							//a log of all writes that have not been garbage collected
 	private int csn;
 	private boolean isPrimary;							//says whether this server is the primary
 	
@@ -41,7 +41,7 @@ public class Server {
 		ostreams = new HashMap<Socket, PrintWriter>();
 		playlist = new Playlist();
 		versionVector = new VersionVector();
-		tentativeWrites = new Log();							//the tentative writes to this server
+		tentativeWrites = new Log();					//the tentative writes to this server
 		rollbackLog = new Log();						//the stable writes that this server is aware of
 		try
 		{
@@ -156,7 +156,7 @@ public class Server {
 
 	
 	public void printForUser(int cID) {
-		
+		System.out.println(playlist.toString());
 	}
 
 	public String toString()
@@ -179,12 +179,15 @@ public class Server {
 		Write w = new Write(acceptStamp, sID, false, "edit " + song + " " + url);
 		versionVector.changeLatestAccept(sID, acceptStamp);
 		tentativeWrites.log(w);
-		playlist.add(song, url);
+		playlist.edit(song, url);
 	}
 
-	public void deleteFromPlaylist(String song) {
-		// TODO Auto-generated method stub
-		
+	public synchronized void deleteFromPlaylist(String song) {
+		long acceptStamp = System.currentTimeMillis();
+		Write w = new Write(acceptStamp, sID, false, "delete " + song);
+		versionVector.changeLatestAccept(sID, acceptStamp);
+		tentativeWrites.log(w);
+		playlist.delete(song);		
 	}
 	
 	public String getPlaylistString()
@@ -197,12 +200,21 @@ public class Server {
 	 */
 	public synchronized void stabilizeWrites()
 	{
-		
+		if(!isPrimary)
+			return;
+		//TODO
 	}
 
 	public void makePrimary() {
 		isPrimary = true;
 		//TODO
+	}
+	
+	public void sendMessageToServer(int otherPort, String message)
+	{
+		System.out.println(otherPort);
+		System.out.println(ostreams.get(socks.get(otherPort)));
+		ostreams.get(socks.get(otherPort)).println(message);
 	}
 	
 }

@@ -85,7 +85,7 @@ public class Runner
 	private static void reconnect(Integer sID)
 	{
 		for(Integer otherID : servers.keySet())
-			recoverConnection(otherID, sID);
+			recoverConnection(sID, otherID);
 	}
 	
 	private static void breakConnection(Integer sA, Integer sB)
@@ -99,6 +99,10 @@ public class Runner
 			return;
 		print("recovering " + serverPorts.get(sIDA) + " and " + serverPorts.get(sIDB));
 		servers.get(sIDA).connectToServer(serverPorts.get(sIDB));
+	}
+	
+	private static void testConnection(int sA, int sB) {
+		servers.get(sA).sendMessageToServer(serverPorts.get(sB), "test connection");
 	}
 	
 	private static void leave(Integer sID)
@@ -158,6 +162,8 @@ public class Runner
 				breakConnection(Integer.parseInt(cmdArgs[1]), Integer.parseInt(cmdArgs[2]));
 			else if(cmdArgs[0].equals("recoverConnection"))
 				recoverConnection(Integer.parseInt(cmdArgs[1]), Integer.parseInt(cmdArgs[2]));
+			else if(cmdArgs[0].equals("testConnection"))
+				testConnection(Integer.parseInt(cmdArgs[1]), Integer.parseInt(cmdArgs[2]));
 			else if(cmdArgs[0].equals("pause"))
 				paused = true;
 			else if(cmdArgs[0].equals("continue"))
@@ -168,5 +174,7 @@ public class Runner
 				scanner = new Scanner(System.in);
 		}
 	}
+
+
 	
 }

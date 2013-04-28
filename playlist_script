@@ -1,5 +1,13 @@
 join 0
+join 1
 startClient 0 0
-user 0 add Love music/beatles/love.mp3
+startClient 1 1
+user 0 add test1 test1.mp3
+user 0 add test2 test2.mp3
+user 0 delete test1
 user 0 printPlaylist
+user 1 add test3 test3.mp3
+user 1 add test4 test4.mp3
+user 1 edit test4 test4.mp3
+user 1 printPlaylist
 quit
