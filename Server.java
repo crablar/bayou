@@ -16,24 +16,26 @@ public class Server {
 	private int port;									//this server's port number
 	private Socket sendsock;							//the socket used for connecting and sending to this server
 	private ServerSocket recvsock;						//socket to accept replica and client connections
-	private ArrayList<Socket> socks;					//list of replica sockets
+	private HashMap<Integer, Socket> socks;				//map of sID -> replica sockets
 	private HashMap<Socket, PrintWriter> ostreams;
 	private Playlist playlist;
 	private VersionVector versionVector;
 	private Log writeLog;
 	private Log rollbackLog;
+	private int csn;
+	private boolean isPrimary;							//says whether this server is the primary
 	
 	
 	public Server(int p, int sID)
 	{
 		this.sID = sID;
 		port = p;
-		socks = new ArrayList<Socket>();
+		socks = new HashMap<Integer, Socket>();
 		ostreams = new HashMap<Socket, PrintWriter>();
 		playlist = new Playlist();
 		versionVector = new VersionVector();
-		writeLog = new Log();
-		rollbackLog = new Log();
+		writeLog = new Log();							//the tentative writes to this server
+		rollbackLog = new Log();						//the stable writes that this server is aware of
 		try
 		{
 			recvsock = new ServerSocket(port);
@@ -64,10 +66,21 @@ public class Server {
 			//dout.println("=====> " + this.recvsock.getLocalPort() + ": requesting ACK from " + otherPort);
 
 			//sendsock.getOutputStream().write((this + ": requesting ACK from " + otherPort).getBytes());
+			socks.put(otherPort, sendsock);
 			new ReplicaThread(this, sendsock);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void closeConnectionTo(int otherPort)
+	{
+		try {
+			socks.remove(otherPort).close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -89,7 +102,7 @@ public class Server {
 			}
 			catch(SocketException e)
 			{
-				//TODO ???????????????????????
+				System.exit(0);
 			}
 			catch(IOException e)
 			{
@@ -134,13 +147,12 @@ public class Server {
 		//TODO
 	}
 
-	public void handleReplicaMessage(String msg)
-	{
-		System.out.println("handling a message!");
-		if(msg != null)
-			System.out.println(this + ": " + msg);
-	}
+
 	
+	public void printForUser(int cID) {
+		
+	}
+
 	public String toString()
 	{
 		return "Server on port " + port;
@@ -148,7 +160,9 @@ public class Server {
 
 	public synchronized void addToPlaylist(String song, String url) 
 	{
-		Write w = new Write(System.currentTimeMillis(), sID, false, "add " + song + " " + url);
+		long acceptStamp = System.currentTimeMillis();
+		Write w = new Write(acceptStamp, sID, false, "add " + song + " " + url);
+		versionVector.changeLatestAccept(sID, acceptStamp);
 		writeLog.log(w);
 		playlist.add(song, url);
 	}
@@ -167,6 +181,14 @@ public class Server {
 	public String getPlaylistString()
 	{
 		return playlist.toString();
+	}
+	
+	/**
+	 * The primary stabilizes all writes up to the earliest acceptStamp in its version vector.
+	 */
+	public synchronized void stabilizeWrites()
+	{
+		
 	}
 	
 }

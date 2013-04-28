@@ -1,14 +1,14 @@
 
 public class Write implements Comparable {
 	
-	public long time;
+	public long acceptStamp;
 	public int cID;
 	public String userCmd;
 	public boolean committed;
 	
-	public Write(long time, int cID, boolean committed, String userCmd)
+	public Write(long acceptStamp, int cID, boolean committed, String userCmd)
 	{
-		this.time = time;
+		this.acceptStamp = acceptStamp;
 		this.cID = cID;
 		this.userCmd = userCmd;
 		this.committed = committed;
@@ -17,7 +17,8 @@ public class Write implements Comparable {
 	@Override
 	public int compareTo(Object other)
 	{
-		return (int)(this.time - ((Write)other).time);
+		int diff = (int)(this.acceptStamp - ((Write)other).acceptStamp);
+		return diff != 0 ? diff : cID - ((Write)other).cID;
 	}
 
 }

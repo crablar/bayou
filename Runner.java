@@ -24,7 +24,7 @@ public class Runner
 		System.out.println("Hello Chao.  Welcome to Bayou.");
 		
 		args = new String[1];	
-		args[0] = "playlist_script";
+		args[0] = "servertest_script";
 		
 		if(args == null)
 			scanner = new Scanner(System.in);
@@ -52,8 +52,7 @@ public class Runner
 	{
 		servers.put(sID, new Server(unusedPort, sID));
 		serverPorts.put(sID, unusedPort++);
-		for(Integer otherID : servers.keySet())
-			recoverConnection(otherID, sID);
+
 	}
 	
 	private static void clientDisconnect(Integer cID)
@@ -63,7 +62,7 @@ public class Runner
 	
 	private static void clientReconnect(Integer cID, Integer sID)
 	{
-		//TODO
+		clients.get(cID).reconnect(serverPorts.get(sID));
 	}
 	
 	private static void printLog(Integer sID)
@@ -78,7 +77,8 @@ public class Runner
 	
 	private static void reconnect(Integer sID)
 	{
-		//TODO
+		for(Integer otherID : servers.keySet())
+			recoverConnection(otherID, sID);
 	}
 	
 	private static void breakConnection(Integer sA, Integer sB)
@@ -125,7 +125,7 @@ public class Runner
 			String command = scanner.nextLine();
 			String[] cmdArgs = command.split(" ");
 			if(scriptMode)
-				System.out.println("SCRIPT: " + command);
+				System.out.println("\nSCRIPT: " + command);
 			if(cmdArgs[0].equals("user"))
 				clients.get(Integer.parseInt(cmdArgs[1])).userRequest(cmdArgs);
 			else if(cmdArgs[0].equals("startClient"))

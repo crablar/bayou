@@ -24,13 +24,18 @@ public class Client {
 	}
 
 	public void userRequest(String[] cmdArgs) {
+		if(sock == null)
+		{
+			System.out.println("Client disconnected, unable to process request.");
+			return;
+		}
 		if (cmdArgs[2].equals("add"))
 			playlistAdd(cmdArgs[3], cmdArgs[4]);
-		if (cmdArgs[2].equals("delete"))
+		else if (cmdArgs[2].equals("delete"))
 			playlistDelete(cmdArgs[3]);
-		if (cmdArgs[2].equals("edit"))
+		else if (cmdArgs[2].equals("edit"))
 			playlistEdit(cmdArgs[3], cmdArgs[4]);
-		if (cmdArgs[2].equals("printPlaylist"))
+		else if (cmdArgs[2].equals("printPlaylist"))
 			playlistPrint();
 	}
 	
@@ -56,7 +61,35 @@ public class Client {
 
 	public void disconnect() {
 		savePlaylistToCache();
-		//TODO
+		try {
+			ostream.println("disconnecting");
+			sock.close();
+			ostream.close();
+			sock = null;
+			ostream = null;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void reconnect(int port)
+	{
+		if(sock == null)
+		{
+			System.out.println("Request failed, client already connected.");
+		}
+		else
+		{
+			try {
+				sock = new Socket("localhost", port);
+				ostream = new PrintWriter(sock.getOutputStream(), true);
+			} catch (SocketException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	private void savePlaylistToCache() {
@@ -68,7 +101,8 @@ public class Client {
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 			public void run() {
 				try {
-					sock.close();
+					if(sock != null)
+						sock.close();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
