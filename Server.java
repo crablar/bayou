@@ -20,7 +20,7 @@ public class Server {
 
 	private int sID;									//the server ID
 	private int port;									//this server's port number
-	private Socket sendsock;							//the socket used for connecting and sending to this server
+	//private Socket sendsock;							//the socket used for connecting and sending to this server
 	private ServerSocket recvsock;						//socket to accept replica and client connections
 	private HashMap<Integer, Socket> socks;				//map of sID -> replica sockets
 	private HashMap<Socket, PrintWriter> ostreams;		
@@ -66,16 +66,24 @@ public class Server {
 	public void connectToServer(int otherPort)
 	{
 		try {
-			sendsock = new Socket();
+			//sendsock = new Socket("localhost", otherPort);
+			
+			Socket sendsock = new Socket();
 			sendsock.connect(new InetSocketAddress(InetAddress.getLocalHost(), otherPort));
+			
 			//System.out.println(this + ": connect to server " + otherPort);
 			//PrintWriter dout = new PrintWriter(sendsock.getOutputStream(), true);
 			//dout.println("=====> " + this.recvsock.getLocalPort() + ": requesting ACK from " + otherPort);
 
 			//sendsock.getOutputStream().write((this + ": requesting ACK from " + otherPort).getBytes());
+			
+			PrintWriter dout = new PrintWriter(sendsock.getOutputStream(), true);
+			ostreams.put(sendsock, dout);
+			
 			socks.put(otherPort, sendsock);
 			ostreams.put(sendsock, new PrintWriter(sendsock.getOutputStream()));
 			new ReplicaThread(this, sendsock);
+			
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -102,10 +110,15 @@ public class Server {
 			{
 				System.out.println(this + " is waiting for connections");
 				sock = recvsock.accept();
+				
 				System.out.println(this + " receiving connection from " + sock.getPort());
+
 				PrintWriter dout = new PrintWriter(sock.getOutputStream(), true);
-				//dout.println("=======> I am " + recvsock.getLocalPort());
 				ostreams.put(sock, dout);
+				
+				//dout.println("=======> I am " + recvsock.getLocalPort());
+				socks.put(sock.getPort(), sock);
+				
 				new ReplicaThread(this, sock);
 			}
 			catch(SocketException e)
@@ -215,6 +228,22 @@ public class Server {
 	{
 		System.out.println(message);
 		ostreams.get(socks.get(otherPort)).println(message);
+	}
+	
+	
+	public synchronized void sendVersionVectorTo(int sID) {
+		Socket sock = socks.get(sID);
+		PrintWriter dout = (PrintWriter) (ostreams.get(sock));
+		
+		String msg = Constants.versionVector_msg;
+		msg += sock.getLocalPort() + " " + (this.versionVector).toString();
+		
+		dout.println(msg);
+	}
+	
+	
+	public synchronized void anti_entropy(int sID) {
+		
 	}
 	
 }
