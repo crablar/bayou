@@ -21,6 +21,8 @@ public class Server {
 	private Playlist playlist;
 	private VersionVector versionVector;
 	private Log writeLog;
+	private Log rollbackLog;
+	
 	
 	public Server(int p, int sID)
 	{
@@ -30,9 +32,10 @@ public class Server {
 		ostreams = new HashMap<Socket, PrintWriter>();
 		playlist = new Playlist();
 		versionVector = new VersionVector();
+		writeLog = new Log();
+		rollbackLog = new Log();
 		try
 		{
-			System.out.println("port is " + port);
 			recvsock = new ServerSocket(port);
 			addShutdownHooks(this);
 		}
@@ -56,9 +59,9 @@ public class Server {
 		try {
 			sendsock = new Socket();
 			sendsock.connect(new InetSocketAddress(InetAddress.getLocalHost(), otherPort));
-			System.out.println(this + ": connect to server " + otherPort);
-			PrintWriter dout = new PrintWriter(sendsock.getOutputStream(), true);
-			dout.println("=====> " + this.recvsock.getLocalPort() + ": requesting ACK from " + otherPort);
+			//System.out.println(this + ": connect to server " + otherPort);
+			//PrintWriter dout = new PrintWriter(sendsock.getOutputStream(), true);
+			//dout.println("=====> " + this.recvsock.getLocalPort() + ": requesting ACK from " + otherPort);
 
 			//sendsock.getOutputStream().write((this + ": requesting ACK from " + otherPort).getBytes());
 			new ReplicaThread(this, sendsock);
@@ -80,7 +83,7 @@ public class Server {
 				sock = recvsock.accept();
 				System.out.println(this + " receiving connection from " + sock.getPort());
 				PrintWriter dout = new PrintWriter(sock.getOutputStream(), true);
-				dout.println("=======> I am " + recvsock.getLocalPort());
+				//dout.println("=======> I am " + recvsock.getLocalPort());
 				ostreams.put(sock, dout);
 				new ReplicaThread(this, sock);
 			}
@@ -143,8 +146,10 @@ public class Server {
 		return "Server on port " + port;
 	}
 
-	public void addToPlaylist(String song, String url) {
-		
+	public synchronized void addToPlaylist(String song, String url) 
+	{
+		Write w = new Write(System.currentTimeMillis(), sID, false, "add " + song + " " + url);
+		writeLog.log(w);
 		playlist.add(song, url);
 	}
 

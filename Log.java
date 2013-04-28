@@ -16,12 +16,7 @@ public class Log
 	
 	public Log()
 	{
-		writes = Collections.synchronizedSortedSet(new TreeSet<Write>(new Comparator<Write>()
-		{
-			public int compare(Write a, Write b)
-			{
-				return (int)(a.time - b.time);
-			}}));
+		writes = Collections.synchronizedSortedSet(new TreeSet<Write>());
 	}
 	
 	/**
