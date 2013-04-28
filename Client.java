@@ -62,7 +62,7 @@ public class Client {
 	public void disconnect() {
 		savePlaylistToCache();
 		try {
-			ostream.println("disconnecting");
+			ostream.println("client disconnecting");
 			sock.close();
 			ostream.close();
 			sock = null;

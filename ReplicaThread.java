@@ -67,12 +67,14 @@ public class ReplicaThread extends Thread {
 				server.printForUser(Integer.parseInt(msg.split(" ")[1]));
 			else if(msg.startsWith("server disconnecting"))
 			{
+				System.out.println("ReplicaThread closing connection with " + server);
 				server.closeConnectionTo(Integer.parseInt(msg.split(" ")[1]));
 				in.close();
 				return false;
 			}
 			else if(msg.startsWith("client disconnecting"))
 			{
+				System.out.println("ReplicaThread closing connection with client on " + sock.getPort());
 				sock.close();
 				in.close();
 				return false;
