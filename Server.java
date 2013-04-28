@@ -18,7 +18,7 @@ public class Server {
 	private ServerSocket recvsock;						//socket to accept replica and client connections
 	private ArrayList<Socket> socks;					//list of replica sockets
 	private HashMap<Socket, PrintWriter> ostreams;
-	private HashMap<String, String> playList;
+	private Playlist playlist;
 	private VersionVector versionVector;
 	private Log writeLog;
 	
@@ -28,7 +28,7 @@ public class Server {
 		port = p;
 		socks = new ArrayList<Socket>();
 		ostreams = new HashMap<Socket, PrintWriter>();
-		playList = new HashMap<String, String>();
+		playlist = new Playlist();
 		versionVector = new VersionVector();
 		try
 		{
@@ -141,6 +141,27 @@ public class Server {
 	public String toString()
 	{
 		return "Server on port " + port;
+	}
+
+	public void addToPlaylist(String song, String url) {
+		
+		playlist.add(song, url);
+	}
+
+
+	public void editPlaylist(String song, String url) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void deleteFromPlaylist(String song) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	public String getPlaylistString()
+	{
+		return playlist.toString();
 	}
 	
 }
