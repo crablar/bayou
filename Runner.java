@@ -23,8 +23,8 @@ public class Runner
 	{
 		System.out.println("Hello Chao.  Welcome to Bayou.");
 		
-		args = new String[1];		// for use in
-		args[0] = "playlist_script";	// Eclipse
+		args = new String[1];	
+		args[0] = "playlist_script";
 		
 		if(args == null)
 			scanner = new Scanner(System.in);
@@ -44,7 +44,7 @@ public class Runner
 	
 	private static void startClient(Integer cID, Integer sID)
 	{
-		Client client = new Client(cID, servers.get(sID));
+		Client client = new Client(cID, serverPorts.get(sID));
 		clients.put(cID, client);
 	}
 	
