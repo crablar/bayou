@@ -46,9 +46,8 @@ public class ReplicaThread extends Thread {
 				else 
 					keepGoing = handleReplicaMessage(line);
 				if(!keepGoing)
-					return;
+					break;
 			}
-			System.out.println("I am server " + server);
 		}
 		catch(SocketException e)
 		{
@@ -62,7 +61,7 @@ public class ReplicaThread extends Thread {
 		}
 		finally
 		{
-			System.out.println("ReplicaThread for " + server + " closing");
+			System.out.println("finally...ReplicaThread for " + server + " closing");
 			removeMetaDataFor();
 			
 			try {
@@ -79,42 +78,33 @@ public class ReplicaThread extends Thread {
 		if(otherID != -1)
 			server.closeConnectionTo(otherID);
 		else
-			server.closeConnectionTo(sock.getLocalPort());
+			server.closeConnectionTo(sock.getPort());
 	}
 	
 
 	private boolean handleClientMessage(String msg) {
 		System.out.println(server + " received: " + msg);
-		try
+		if(msg.startsWith("client disconnecting"))
 		{
-			if(msg.startsWith("client disconnecting"))
-			{
-				System.out.println("ReplicaThread closing connection with client on " + sock.getPort());
-				sock.close();
-				in.close();
-				return false;
-			}
-			else if(msg.startsWith("printPlaylist"))
-				server.printPlaylist();
-			else if(msg.startsWith("add"))
-			{
-				String[] msgArgs = msg.split(" ", 3);
-				server.addToPlaylist(msgArgs[1], msgArgs[2]);
-			}
-			else if(msg.startsWith("edit"))
-			{
-				String[] msgArgs = msg.split(" ", 3);
-				server.editPlaylist(msgArgs[1], msgArgs[2]);
-			}
-			else if(msg.startsWith("delete"))
-			{
-				String[] msgArgs = msg.split(" ", 2);
-				server.deleteFromPlaylist(msgArgs[1]);
-			}
+			System.out.println("ReplicaThread closing connection with client on " + sock.getPort());
+			return false;
 		}
-		catch(IOException e)
+		else if(msg.startsWith("printPlaylist"))
+			server.printPlaylist();
+		else if(msg.startsWith("add"))
 		{
-			System.out.println("Problem with client-server in ReplicaThread");
+			String[] msgArgs = msg.split(" ", 3);
+			server.addToPlaylist(msgArgs[1], msgArgs[2]);
+		}
+		else if(msg.startsWith("edit"))
+		{
+			String[] msgArgs = msg.split(" ", 3);
+			server.editPlaylist(msgArgs[1], msgArgs[2]);
+		}
+		else if(msg.startsWith("delete"))
+		{
+			String[] msgArgs = msg.split(" ", 2);
+			server.deleteFromPlaylist(msgArgs[1]);
 		}
 			return true;
 	}

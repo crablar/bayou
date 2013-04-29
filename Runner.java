@@ -25,7 +25,7 @@ public class Runner
 		System.out.println("Hello Chao.  Welcome to Bayou.");
 		
 		args = new String[1];	
-		args[0] = "servertest_script";
+		args[0] = "clienttest2_script";
 		
 		if(args == null)
 			scanner = new Scanner(System.in);
@@ -90,7 +90,7 @@ public class Runner
 	
 	private static void breakConnection(Integer sA, Integer sB)
 	{
-		//TODO
+		servers.get(sA).breakConnectionWith(sB);
 	}
 	
 	private static void recoverConnection(Integer sIDA, Integer sIDB)

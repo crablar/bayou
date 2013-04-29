@@ -64,19 +64,23 @@ public class Client {
 		savePlaylistToCache();
 		try {
 			ostream.println("client disconnecting");
-			sock.close();
 			ostream.close();
+			sock.close();
 			sock = null;
 			ostream = null;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (NullPointerException e)
+		{
+			System.out.println("Disconnection error in client " + cID);
 		}
+		
 	}
 	
 	public void reconnect(int port)
 	{
-		if(sock == null)
+		if(sock != null)
 		{
 			System.out.println("Request failed, client already connected.");
 		}
@@ -114,8 +118,10 @@ public class Client {
 	}
 
 	public void printConnections() {
-		// TODO Auto-generated method stub
-		
+		if(sock != null)
+			System.out.println("Client " + cID + " connected to server on port " + sock.getPort());
+		else
+			System.out.println("Client " + cID + " has no connections.");
 	}
 
 }

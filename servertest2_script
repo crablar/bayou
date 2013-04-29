@@ -1,0 +1,13 @@
+join 0
+join 1
+join 2
+reconnect 0
+reconnect 1
+printConnections
+breakConnection 0 1
+printConnections
+breakConnection 2 1
+printConnections
+recoverConnection 1 0
+printConnections
+quit

@@ -115,7 +115,7 @@ public class Server {
 				ostreams.put(sock, dout);
 				socks.put(sock.getPort(), sock);
 				new ReplicaThread(this, sock);
-//				dout.println("serverConnect " + sID);
+				dout.println("serverConnect " + sID);
 			}
 			catch(SocketException e)
 			{
@@ -253,5 +253,12 @@ public class Server {
 		ostreams.clear();
 			
 	}
-	
+
+	public void breakConnectionWith(Integer sB) {
+		Socket sockB = socks.remove(sB);
+		if(sockB != null)
+			ostreams.remove(sockB).close();
+		else
+			System.out.println("failure in breakconnection");
+	}
 }

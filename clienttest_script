@@ -1,0 +1,9 @@
+join 0
+startClient 0 0
+startClient 1 0
+join 1
+startClient 2 1
+printConnections
+clientDisconnect 1
+printConnections
+quit
