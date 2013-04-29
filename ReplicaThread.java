@@ -88,7 +88,7 @@ public class ReplicaThread extends Thread {
 			else if(msg.startsWith("serverConnect"))
 			{
 				Integer otherID = Integer.parseInt(msg.split(" ")[1]);
-				server.addToMap(otherID, sock);
+				server.addConnectionToMap(otherID, sock);
 			}
 			else if(msg.startsWith("printPlaylist"))
 				server.printForUser(Integer.parseInt(msg.split(" ")[1]));

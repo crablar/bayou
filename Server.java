@@ -22,7 +22,7 @@ public class Server {
 	private int port;									//this server's port number
 	private Socket sendsock;							//the socket used for connecting and sending to this server
 	private ServerSocket recvsock;						//socket to accept replica and client connections
-	private HashMap<Integer, Socket> socks;				//map of sID -> replica sockets
+	private HashMap<Integer, Socket> socks;				//map of sID/ports -> replica sockets
 	private HashMap<Socket, PrintWriter> ostreams;		
 	private Playlist playlist;
 	private VersionVector versionVector;
@@ -63,7 +63,7 @@ public class Server {
 		listenThread.start();
 	}
 	
-	public void connectToServer(int otherPort)
+	public void connectToServer(int otherPort, int otherID)
 	{
 		try {
 			sendsock = new Socket();
@@ -72,8 +72,8 @@ public class Server {
 			PrintWriter dout = new PrintWriter(sendsock.getOutputStream(), true);
 			//dout.println("=====> " + this.recvsock.getLocalPort() + ": requesting ACK from " + otherPort);
 			//sendsock.getOutputStream().write((this + ": requesting ACK from " + otherPort).getBytes());
-			dout.println("serverConnect " + sendsock.getLocalPort() + " " + sID);
-			socks.put(otherPort, sendsock);
+			dout.println("serverConnect " + sID);
+			socks.put(otherID, sendsock);
 			ostreams.put(sendsock, dout);
 			new ReplicaThread(this, sendsock);
 		} catch (UnknownHostException e) {
@@ -106,6 +106,7 @@ public class Server {
 				PrintWriter dout = new PrintWriter(sock.getOutputStream(), true);
 				//dout.println("=======> I am " + recvsock.getLocalPort());
 				ostreams.put(sock, dout);
+				socks.put(sock.getPort(), sock);
 				new ReplicaThread(this, sock);
 			}
 			catch(SocketException e)
@@ -216,13 +217,13 @@ public class Server {
 		System.out.println(msg);
 	}
 	
-	public void sendMessageToServer(int otherPort, String message)
+	public void sendMessageToServer(int otherID, String message)
 	{
 		System.out.println(message);
-		ostreams.get(socks.get(otherPort)).println(message);
+		ostreams.get(socks.get(otherID)).println(message);
 	}
 
-	public void addToMap(Integer otherID, Socket sock) {
+	public void addConnectionToMap(Integer otherID, Socket sock) {
 		socks.put(otherID, sock);
 	}
 	

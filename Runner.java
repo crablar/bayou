@@ -97,11 +97,11 @@ public class Runner
 	{
 		if(sIDA == sIDB)
 			return;
-		servers.get(sIDA).connectToServer(serverPorts.get(sIDB));
+		servers.get(sIDA).connectToServer(serverPorts.get(sIDB), sIDB);
 	}
 	
 	private static void testConnection(int sA, int sB) {
-		servers.get(sA).sendMessageToServer(serverPorts.get(sB), "test connection");
+		servers.get(sA).sendMessageToServer(sB, "test connection");
 	}
 	
 	private static void leave(Integer sID)
