@@ -25,7 +25,7 @@ public class Runner
 		System.out.println("Hello Chao.  Welcome to Bayou.");
 		
 		args = new String[1];	
-		args[0] = "playlist_script";
+		args[0] = "servertest_script";
 		
 		if(args == null)
 			scanner = new Scanner(System.in);
@@ -79,7 +79,7 @@ public class Runner
 	
 	private static void isolate(Integer sID)
 	{
-		//TODO
+		servers.get(sID).isolate();
 	}
 	
 	private static void reconnect(Integer sID)
@@ -113,6 +113,14 @@ public class Runner
 	{
 		long t = System.currentTimeMillis();
 		while(System.currentTimeMillis() - delay_interval < t);
+	}
+	
+	private static void printConnections()
+	{
+		for(Server s : servers.values())
+			s.printConnections();
+		for(Client c : clients.values())
+			c.printConnections();
 	}
 	
 	private static void quit()
@@ -158,6 +166,8 @@ public class Runner
 				recoverConnection(Integer.parseInt(cmdArgs[1]), Integer.parseInt(cmdArgs[2]));
 			else if(cmdArgs[0].equals("testConnection"))
 				testConnection(Integer.parseInt(cmdArgs[1]), Integer.parseInt(cmdArgs[2]));
+			else if(cmdArgs[0].equals("printConnections"))
+				printConnections();
 			else if(cmdArgs[0].equals("pause"))
 				paused = true;
 			else if(cmdArgs[0].equals("continue"))

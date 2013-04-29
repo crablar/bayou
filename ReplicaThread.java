@@ -17,14 +17,16 @@ public class ReplicaThread extends Thread {
 	private Socket sock;
 	private BufferedReader in;
 	private boolean listeningToClient;
+	private Integer otherID;
 	
 	public ReplicaThread(Server serv, Socket sock)
 	{
+		otherID = -1;
 		listeningToClient = false;
 		in = null;
 		server = serv;
 		this.sock = sock;
-		System.out.println("starting ReplicaThread for " + server + ", listening to " + sock.getPort());
+		System.out.println("starting ReplicaThread for " + server + " at local port " + sock.getLocalPort() + ", listening to " + sock.getPort());
 		start();
 	}
 	
@@ -46,6 +48,13 @@ public class ReplicaThread extends Thread {
 				if(!keepGoing)
 					return;
 			}
+			System.out.println("I am server " + server);
+		}
+		catch(SocketException e)
+		{
+			System.out.println("ReplicaThread for " + server + " closing");
+			removeMetaDataFor();
+			
 		}
 		catch (IOException e)
 		{
@@ -53,14 +62,26 @@ public class ReplicaThread extends Thread {
 		}
 		finally
 		{
+			System.out.println("ReplicaThread for " + server + " closing");
+			removeMetaDataFor();
+			
 			try {
 				in.close();
+				sock.close();
 			} catch (NullPointerException | IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
 	}
+	
+	private void removeMetaDataFor() {
+		if(otherID != -1)
+			server.closeConnectionTo(otherID);
+		else
+			server.closeConnectionTo(sock.getLocalPort());
+	}
+	
 
 	private boolean handleClientMessage(String msg) {
 		System.out.println(server + " received: " + msg);
@@ -101,27 +122,13 @@ public class ReplicaThread extends Thread {
 	private boolean handleReplicaMessage(String msg)
 	{
 		System.out.println(server + " received: " + msg);
-		try
-		{
 			if(msg.startsWith("test connection"))
 					server.print(" receiving test message from server on " + sock.getPort());
-			else if(msg.startsWith("server disconnecting"))
-			{
-				System.out.println("ReplicaThread closing connection with " + server);
-				server.closeConnectionTo(Integer.parseInt(msg.split(" ")[1]));
-				in.close();
-				return false;
-			}
 			else if(msg.startsWith("serverConnect"))
 			{
-				Integer otherID = Integer.parseInt(msg.split(" ")[1]);
+				otherID = Integer.parseInt(msg.split(" ")[1]);
 				server.addConnectionToMap(otherID, sock);
 			}
-		}
-		catch(IOException e)
-		{
-			e.printStackTrace();
-		}
 		return true;
 	}
 }

@@ -65,28 +65,35 @@ public class Server {
 	
 	public void connectToServer(int otherPort, int otherID)
 	{
-		try {
-			sendsock = new Socket();
-			sendsock.connect(new InetSocketAddress(InetAddress.getLocalHost(), otherPort));
-			//System.out.println(this + ": connect to server " + otherPort);
-			PrintWriter dout = new PrintWriter(sendsock.getOutputStream(), true);
-			//dout.println("=====> " + this.recvsock.getLocalPort() + ": requesting ACK from " + otherPort);
-			//sendsock.getOutputStream().write((this + ": requesting ACK from " + otherPort).getBytes());
-			dout.println("serverConnect " + sID);
-			socks.put(otherID, sendsock);
-			ostreams.put(sendsock, dout);
-			new ReplicaThread(this, sendsock);
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+		if(!(socks.containsKey(otherID) || socks.containsKey(otherPort))){
+			try {
+				sendsock = new Socket();
+				sendsock.connect(new InetSocketAddress(InetAddress.getLocalHost(), otherPort));
+				//System.out.println(this + ": connect to server " + otherPort);
+				PrintWriter dout = new PrintWriter(sendsock.getOutputStream(), true);
+				//dout.println("=====> " + this.recvsock.getLocalPort() + ": requesting ACK from " + otherPort);
+				//sendsock.getOutputStream().write((this + ": requesting ACK from " + otherPort).getBytes());
+				dout.println("serverConnect " + sID);
+				socks.put(otherID, sendsock);
+				ostreams.put(sendsock, dout);
+				new ReplicaThread(this, sendsock);
+			} catch (UnknownHostException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
 	public void closeConnectionTo(int otherPort)
 	{
 		try {
-			socks.remove(otherPort).close();
+			Socket temp = socks.remove(otherPort);
+			if(temp != null)
+			{
+				ostreams.remove(temp).close();
+				temp.close();
+			}	
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -108,6 +115,7 @@ public class Server {
 				ostreams.put(sock, dout);
 				socks.put(sock.getPort(), sock);
 				new ReplicaThread(this, sock);
+//				dout.println("serverConnect " + sID);
 			}
 			catch(SocketException e)
 			{
@@ -136,11 +144,6 @@ public class Server {
 		try 
 		{
 			recvsock.close();
-			for(Socket sock : ostreams.keySet())
-			{
-				ostreams.get(sock).close();
-				sock.close();
-			}
 		}
 		catch(SocketException e)
 		{
@@ -224,7 +227,31 @@ public class Server {
 	}
 
 	public void addConnectionToMap(Integer otherID, Socket sock) {
+		socks.remove(sock.getPort());
 		socks.put(otherID, sock);
+	}
+
+	public void printConnections() {
+		System.out.println("Server" + this.sID  + " connections");
+		for(Integer sID : socks.keySet())
+			System.out.println(sID + " -> " + " remote port: " + socks.get(sID).getPort() + " local port " + socks.get(sID).getLocalPort());
+	}
+	
+	public void isolate()
+	{
+		for(Socket sock : socks.values())
+		{
+			ostreams.get(sock).close();
+			try {
+				sock.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		socks.clear();
+		ostreams.clear();
+			
 	}
 	
 }

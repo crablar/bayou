@@ -113,4 +113,9 @@ public class Client {
 		}));
 	}
 
+	public void printConnections() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

@@ -1,6 +1,12 @@
 join 0
 join 1
-recoverConnection 0 1
-testConnection 0 1
-testConnection 1 0
+join 2
+reconnect 0
+reconnect 1
+printConnections
+reconnect 2
+isolate 0
+printConnections
+reconnect 0
+printConnections
 quit
