@@ -2,4 +2,5 @@ join 0
 join 1
 recoverConnection 0 1
 testConnection 0 1
+testConnection 1 0
 quit

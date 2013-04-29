@@ -97,7 +97,6 @@ public class Runner
 	{
 		if(sIDA == sIDB)
 			return;
-		print("recovering " + serverPorts.get(sIDA) + " and " + serverPorts.get(sIDB));
 		servers.get(sIDA).connectToServer(serverPorts.get(sIDB));
 	}
 	
@@ -120,12 +119,7 @@ public class Runner
 	{
 		System.exit(0);
 	}
-	
-	private static void print(String msg)
-	{
-		System.out.println(msg);
-	}
-	
+
 	private static void run()
 	{
 		while(true)
