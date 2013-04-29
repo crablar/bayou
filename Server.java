@@ -157,8 +157,8 @@ public class Server {
 	}
 
 	
-	public void printForUser(int cID) {
-		System.out.println(playlist.toString());
+	public void printPlaylist() {
+		System.out.println(playlist);
 	}
 
 	public String toString()

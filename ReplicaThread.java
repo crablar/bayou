@@ -34,9 +34,15 @@ public class ReplicaThread extends Thread {
 		{
 			in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
 			String line;
+			boolean keepGoing;
 			while((line = in.readLine()) != null)
 			{
-				boolean keepGoing = handleReplicaMessage(line);
+				if(line.startsWith("I'm a client"))
+					listeningToClient = true;
+				if(listeningToClient)
+					keepGoing = handleClientMessage(line);
+				else 
+					keepGoing = handleReplicaMessage(line);
 				if(!keepGoing)
 					return;
 			}
@@ -55,21 +61,49 @@ public class ReplicaThread extends Thread {
 			}
 		}
 	}
-	
-	/*
-	 * Handles a message received by this replica and returns a String to the listening thread.
-	 * Returns false if disconnect message received.
-	 */
-	private boolean handleReplicaMessage(String msg)
-	{
+
+	private boolean handleClientMessage(String msg) {
+		System.out.println(server + " received: " + msg);
 		try
 		{
-			System.out.println(server + " received: " + msg);
-			if(msg.startsWith("print"))
-				server.printForUser(Integer.parseInt(msg.split(" ")[1]));
-			else if(msg.startsWith("I'm a client"))
-				listeningToClient = true;
-			else if(msg.startsWith("test connection"))
+			if(msg.startsWith("client disconnecting"))
+			{
+				System.out.println("ReplicaThread closing connection with client on " + sock.getPort());
+				sock.close();
+				in.close();
+				return false;
+			}
+			else if(msg.startsWith("printPlaylist"))
+				server.printPlaylist();
+			else if(msg.startsWith("add"))
+			{
+				String[] msgArgs = msg.split(" ", 3);
+				server.addToPlaylist(msgArgs[1], msgArgs[2]);
+			}
+			else if(msg.startsWith("edit"))
+			{
+				String[] msgArgs = msg.split(" ", 3);
+				server.editPlaylist(msgArgs[1], msgArgs[2]);
+			}
+			else if(msg.startsWith("delete"))
+			{
+				String[] msgArgs = msg.split(" ", 2);
+				server.deleteFromPlaylist(msgArgs[1]);
+			}
+		}
+		catch(IOException e)
+		{
+			System.out.println("Problem with client-server in ReplicaThread");
+		}
+			return true;
+	}
+	
+	private boolean handleReplicaMessage(String msg)
+	{
+		System.out.println(server + " received: " + msg);
+		try
+		{
+			if(msg.startsWith("test connection"))
 					server.print(" receiving test message from server on " + sock.getPort());
 			else if(msg.startsWith("server disconnecting"))
 			{
@@ -78,20 +112,11 @@ public class ReplicaThread extends Thread {
 				in.close();
 				return false;
 			}
-			else if(msg.startsWith("client disconnecting"))
-			{
-				System.out.println("ReplicaThread closing connection with client on " + sock.getPort());
-				sock.close();
-				in.close();
-				return false;
-			}
 			else if(msg.startsWith("serverConnect"))
 			{
 				Integer otherID = Integer.parseInt(msg.split(" ")[1]);
 				server.addConnectionToMap(otherID, sock);
 			}
-			else if(msg.startsWith("printPlaylist"))
-				server.printForUser(Integer.parseInt(msg.split(" ")[1]));
 		}
 		catch(IOException e)
 		{

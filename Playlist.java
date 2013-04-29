@@ -19,14 +19,16 @@ public class Playlist {
 	
 	public String toString()
 	{
-		String result = "";
+		String result = "Playlist:\n";
 		for(String s : map.keySet())
 			result += s + " " + map.get(s) + "\n";
 		return result;
 	}
 
 	public void edit(String song, String url) {
-		map.put(song, url);
+		if(!map.containsKey(song))
+			System.out.println("Error: playlist does not contain " + song);
+			map.put(song, url);
 	}
 
 	public void delete(String song) {

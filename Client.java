@@ -41,7 +41,7 @@ public class Client {
 	}
 	
 	private void playlistPrint(){
-		ostream.println("print " + cID);
+		ostream.println("printPlaylist " + cID);
 	}
 	
 	private void playlistEdit(String song, String url) {

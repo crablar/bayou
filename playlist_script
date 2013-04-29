@@ -8,6 +8,6 @@ user 0 delete test1
 user 0 printPlaylist
 user 1 add test3 test3.mp3
 user 1 add test4 test4.mp3
-user 1 edit test4 test4.mp3
+user 1 edit test4 test5.mp3
 user 1 printPlaylist
 quit
