@@ -8,6 +8,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * A Bayou replica.
@@ -26,11 +27,12 @@ public class Server {
 	private HashMap<Socket, PrintWriter> ostreams;		
 	private Playlist playlist;
 	private VersionVector versionVector;
-	private Log tentativeWrites;						//a log of writes that haven't been committed
+	private Log write_log;						//a log of writes that haven't been committed
 	private Log rollbackLog;							//a log of all writes that have not been garbage collected
 	private int csn;
 	private boolean isPrimary;							//says whether this server is the primary
-	
+	private ArrayList<Integer> lastContacts;
+	private boolean freeForEntropy;
 	
 	public Server(int p, int sID)
 	{
@@ -41,8 +43,11 @@ public class Server {
 		ostreams = new HashMap<Socket, PrintWriter>();
 		playlist = new Playlist();
 		versionVector = new VersionVector();
-		tentativeWrites = new Log();					//the tentative writes to this server
+		write_log = new Log();					//the tentative writes to this server
 		rollbackLog = new Log();						//the stable writes that this server is aware of
+		
+		lastContacts = new ArrayList<Integer>();
+		freeForEntropy = true;
 		try
 		{
 			recvsock = new ServerSocket(port);
@@ -174,7 +179,7 @@ public class Server {
 		long acceptStamp = System.currentTimeMillis();
 		Write w = new Write(acceptStamp, sID, false, "add " + song + " " + url);
 		versionVector.changeLatestAccept(sID, acceptStamp);
-		tentativeWrites.log(w);
+		write_log.log(w);
 		playlist.add(song, url);
 	}
 
@@ -183,7 +188,7 @@ public class Server {
 		long acceptStamp = System.currentTimeMillis();
 		Write w = new Write(acceptStamp, sID, false, "edit " + song + " " + url);
 		versionVector.changeLatestAccept(sID, acceptStamp);
-		tentativeWrites.log(w);
+		write_log.log(w);
 		playlist.edit(song, url);
 	}
 
@@ -191,7 +196,7 @@ public class Server {
 		long acceptStamp = System.currentTimeMillis();
 		Write w = new Write(acceptStamp, sID, false, "delete " + song);
 		versionVector.changeLatestAccept(sID, acceptStamp);
-		tentativeWrites.log(w);
+		write_log.log(w);
 		playlist.delete(song);		
 	}
 	
@@ -261,4 +266,115 @@ public class Server {
 		else
 			System.out.println("failure in breakconnection");
 	}
+	
+	
+	//Sender calls this
+	public synchronized void startEntropySession() {
+		
+		if(lastContacts.size() == socks.keySet().size()) {
+			lastContacts.clear();
+		}
+		
+		for(Integer i: socks.keySet()) {
+			if(!lastContacts.contains(i)){
+				lastContacts.add(i);
+				break;
+			}	
+		}
+
+		Socket socket = socks.get(lastContacts.get(lastContacts.size() - 1));
+		
+		if(socket != null) {
+			PrintWriter dout = (PrintWriter)ostreams.get(socket);
+			
+			String msg = Constants.entropySession_msg + " " + this.sID;
+			dout.println(msg);
+		}
+		else {
+			System.out.println("No contact found for new Entropy session --> startEntropySession");
+		}
+	}
+	
+	//Receiver does this
+	public synchronized void sendResponseToEntropyRequest(Socket otherSock) {
+		PrintWriter dout = (PrintWriter)ostreams.get(otherSock);
+		String msg;
+		
+		if(freeForEntropy) {
+			msg = Constants.entropyAck_msg + " " + this.sID + " " + this.versionVector.toString();
+			
+			
+		}
+		else {
+			msg = Constants.entropyReject_msg + " " + sID;
+		}
+		
+		dout.println(msg);
+	}
+	
+	public synchronized void basic_anti_entropy_protocol(Socket otherSock, VersionVector r_vector) {
+		Iterator<Write> it = write_log.iterator();
+		Write nextWrite;
+		
+		if(it.hasNext()) {
+			//nextWrite = it.next();
+			String new_writes = "";
+
+			
+			while(it.hasNext()) {
+				nextWrite = it.next();
+				
+				if(r_vector.getStamp(nextWrite.getServerId()) < nextWrite.getAcceptStamp()) {
+					new_writes += nextWrite.toString();
+					
+					if(it.hasNext()) {
+						new_writes += ":::";
+					}
+				}
+			}
+			
+			PrintWriter dout = (PrintWriter)ostreams.get(otherSock);
+			dout.println(new_writes);
+			
+		}
+		else {
+			System.out.println("No writes can be found in the log for server: " + sID);
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }

@@ -41,6 +41,10 @@ public class VersionVector {
 		}
 	}
 	
+	public long getStamp(int sID) {
+		return vector.get(sID);
+	}
+	
 	public String toString() {
 		String res = "";
 		

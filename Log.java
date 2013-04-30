@@ -1,5 +1,6 @@
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -31,6 +32,10 @@ public class Log
 	public String toString()
 	{
 		return null;
+	}
+	
+	public Iterator<Write> iterator() {
+		return writes.iterator();
 	}
 	
 }
