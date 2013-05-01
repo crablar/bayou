@@ -420,9 +420,9 @@ public class Server {
 
 				if(r_vector.getStamp(nextWrite.getServerId()) < nextWrite.getAcceptStamp()) {
 					sendWrite(receiver_sock, nextWrite, msg_num);
+					msg_num++;
 				}
 
-				msg_num++;
 			}
 		}
 		else {

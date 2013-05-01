@@ -1,16 +1,24 @@
 join 0
 join 1
+join 2
+recoverConnection 0 1
+recoverConnection 1 2
 startClient 0 0
 startClient 1 1
-user 0 add test1 test1.mp3
-user 0 add test2 test2.mp3
-printLogs
-user 0 printPlaylist
-user 0 delete test1
-user 0 printPlaylist
+startClient 2 2
 user 1 add test3 test3.mp3
-user 1 add test4 test4.mp3
-user 1 edit test4 test5.mp3
+user 2 add nevercommitted nevercommitted.mp3
+printLogs
 user 1 printPlaylist
-printLog 1
+startEntropy 0
+startEntropy 1
+startEntropy 0
+startEntropy 2
+startEntropy 1
+printLogs
+user 2 printPlaylist
+user 2 printPlaylist
+user 1 printPlaylist
+user 0 printPlaylist
+printLogs
 quit
