@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -25,6 +26,7 @@ public class Server {
 	private ServerSocket recvsock;						//socket to accept replica and client connections
 	private HashMap<Integer, Socket> socks;				//map of sID/ports -> replica sockets
 	private HashMap<Socket, PrintWriter> ostreams;		
+	private PrintWriter clientWriter;
 	private Playlist playlist;
 	private VersionVector versionVector;
 	private Log uncommittedWrites;						//a log of writes that haven't been committed
@@ -531,6 +533,14 @@ public class Server {
 		else if("delete".equals(w.getUpdateCmd())) {
 			playlist.delete(w.getSong());
 		}
+	}
+
+	public void messageClient(String msg) {
+		clientWriter.println(msg);
+	}
+
+	public void setClientWriter(OutputStream outputStream) {
+		clientWriter =  new PrintWriter(outputStream);
 	}
 
 

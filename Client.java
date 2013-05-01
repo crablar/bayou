@@ -1,4 +1,6 @@
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
@@ -8,20 +10,54 @@ public class Client {
 	private Integer cID;
 	private Socket sock;
 	private PrintWriter ostream;
+	private BufferedReader in;
 	private Playlist cachedPlaylist;	//for "read your writes"
 
 	public Client(Integer cID, Integer port) {
 		this.cID = cID;
+		cachedPlaylist = new Playlist();
 		try {
 			sock = new Socket("localhost", port);
 			addShutdownHooks(this);
 			ostream = new PrintWriter(sock.getOutputStream(), true);
-			ostream.println("I'm a client");
+			ostream.println("I'm a client. My ID is :::" + cID);
+			in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+			Runnable listener = new Runnable()
+			{
+				public void run()
+				{
+					listen();
+				}
+			};
+			Thread listenThread = new Thread(listener);
+			listenThread.start();
 		} catch (SocketException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	protected void listen() {
+		while(true)
+		{
+			try
+			{
+				String line;
+				while((line = in.readLine()) != null)
+				{
+					System.out.println(this + ": " + line);
+				}
+			}
+			catch(SocketException e)
+			{
+				System.exit(0);
+			}
+			catch(IOException e)
+			{
+				e.printStackTrace();
+			}
+		}		
 	}
 
 	public void userRequest(String[] cmdArgs) {
@@ -57,7 +93,7 @@ public class Client {
 	}
 
 	public String toString() {
-		return "Client ID: " + cID;
+		return "Client " + cID;
 	}
 
 	public void disconnect() {
@@ -65,9 +101,11 @@ public class Client {
 		try {
 			ostream.println("client disconnecting");
 			ostream.close();
+			in.close();
 			sock.close();
 			sock = null;
 			ostream = null;
+			in = null;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -89,6 +127,7 @@ public class Client {
 			try {
 				sock = new Socket("localhost", port);
 				ostream = new PrintWriter(sock.getOutputStream(), true);
+				in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
 				ostream.println("I'm a client");
 			} catch (SocketException e) {
 				e.printStackTrace();

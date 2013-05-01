@@ -41,7 +41,11 @@ public class ReplicaThread extends Thread {
 			while((line = in.readLine()) != null)
 			{
 				if(line.startsWith("I'm a client"))
+				{
 					listeningToClient = true;
+					server.setClientWriter(sock.getOutputStream());
+					server.messageClient("I'm listening to you!");
+				} 
 				if(listeningToClient)
 					keepGoing = handleClientMessage(line);
 				else 
