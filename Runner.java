@@ -25,7 +25,7 @@ public class Runner
 		System.out.println("Hello Chao.  Welcome to Bayou.");
 		
 		args = new String[1];	
-		args[0] = "playlist2_script";
+		args[0] = "entropy_script";
 		
 		if(args == null)
 			scanner = new Scanner(System.in);
@@ -75,6 +75,7 @@ public class Runner
 	private static void printLog(Integer sID)
 	{
 		servers.get(sID).printLog();
+		System.out.println("-------------------------------------");
 	}
 	
 	private static void isolate(Integer sID)
@@ -107,6 +108,11 @@ public class Runner
 	private static void leave(Integer sID)
 	{
 		//TODO
+	}
+	
+
+	private static void testEntropy(int sID) {
+		servers.get(sID).startEntropySession();
 	}
 	
 	private static void delay()
@@ -168,6 +174,8 @@ public class Runner
 				testConnection(Integer.parseInt(cmdArgs[1]), Integer.parseInt(cmdArgs[2]));
 			else if(cmdArgs[0].equals("printConnections"))
 				printConnections();
+			else if(cmdArgs[0].equals("startEntropy"))
+				testEntropy(Integer.parseInt(cmdArgs[1]));
 			else if(cmdArgs[0].equals("pause"))
 				paused = true;
 			else if(cmdArgs[0].equals("continue"))
@@ -178,6 +186,7 @@ public class Runner
 				scanner = new Scanner(System.in);
 		}
 	}
+
 
 
 	

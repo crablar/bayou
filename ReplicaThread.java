@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Scanner;
 
 /**
  * A thread that is created whenever a Server accepts a new Socket connection
@@ -119,6 +120,74 @@ public class ReplicaThread extends Thread {
 				otherID = Integer.parseInt(msg.split(" ")[1]);
 				server.addConnectionToMap(otherID, sock);
 			}
+			else if(msg.startsWith(Constants.begin_entropySession_msg)) {
+				int server_Id = Integer.parseInt(msg.split(" ")[1]);
+				
+				if(this.otherID == server_Id) {
+					server.sendResponseToEntropyRequest(sock);
+				}
+				else {
+					server.print("---------> Beging entropy from wrong server!");
+				}
+			}
+			else if(msg.startsWith(Constants.entropyReject_msg)) {
+				server.startEntropySession();
+			}
+			else if(msg.startsWith(Constants.entropyAck_msg)) {
+				server.setFreeForEntropy(false);
+				
+				Scanner tokens = new Scanner(msg);
+				String s_msg = tokens.next();
+				assert (Constants.entropyAck_msg).equals(s_msg);
+				
+				int server_Id = tokens.nextInt();
+				long r_csn = tokens.nextLong();
+				
+				VersionVector r_vector = new VersionVector(tokens.nextLine());
+				
+				if(this.otherID == server_Id) {
+					server.basic_anti_entropy_protocol(sock, r_vector, r_csn);
+				}
+				else {
+					server.print("-------------> entropy ACk to wrong sender!");
+				}
+				
+				tokens.close();
+			}
+			else if(msg.startsWith(Constants.commit_notification)) {
+				Scanner tokens = new Scanner(msg);
+				String s_msg = tokens.next();
+				assert (Constants.commit_notification).equals(s_msg);
+				
+				int msg_num = tokens.nextInt();
+				long w_accept_stamp = tokens.nextLong();
+				int w_server_Id = tokens.nextInt();
+				long w_csn = tokens.nextLong();
+				
+				tokens.close();
+				
+				server.commitExistingWrite(msg_num, w_accept_stamp, w_server_Id, w_csn);
+			}
+			else if(msg.startsWith(Constants.server_write_msg)) {
+				Scanner tokens = new Scanner(msg);
+				String s_msg = tokens.next();
+				assert (Constants.server_write_msg).equals(s_msg);
+				
+				int msg_num = tokens.nextInt();
+				Write update = new Write(tokens.nextLine());
+				
+				tokens.close();
+				
+				
+				server.addServerWrite(msg_num, update);				
+			}
+			else if(msg.startsWith(Constants.entropy_finish_msg)) {
+				int num_msgs = Integer.parseInt(msg.split(" ")[1]);
+				
+				server.finishEntropyProcessing(num_msgs, this.otherID);
+			}
 		return true;
 	}
+	
+	
 }

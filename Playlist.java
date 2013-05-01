@@ -26,13 +26,23 @@ public class Playlist {
 	}
 
 	public void edit(String song, String url) {
-		if(!map.containsKey(song))
+		if(!map.containsKey(song)) {
 			System.out.println("Error: playlist does not contain " + song);
-			map.put(song, url);
+		}
+		
+		map.put(song, url);
 	}
 
 	public void delete(String song) {
 		map.remove(song);
+	}
+	
+	public boolean containsSong(String song) {
+		return (map.get(song) != null);
+	}
+	
+	public void clear() {
+		map.clear();
 	}
 	
 }
