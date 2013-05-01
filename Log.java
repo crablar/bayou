@@ -31,7 +31,10 @@ public class Log
 	
 	public String toString()
 	{
-		return null;
+		String result = "";
+		for(Write w : writes)
+			result += "\n" + w.toStringForPrinting();
+		return result;
 	}
 	
 	public Iterator<Write> iterator() {

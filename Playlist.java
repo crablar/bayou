@@ -19,9 +19,9 @@ public class Playlist {
 	
 	public String toString()
 	{
-		String result = "Playlist:\n";
+		String result = "Playlist:";
 		for(String s : map.keySet())
-			result += s + " " + map.get(s) + "\n";
+			result +=  "\n" + s + " " + map.get(s);
 		return result;
 	}
 

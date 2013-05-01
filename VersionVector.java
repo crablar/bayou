@@ -63,5 +63,24 @@ public class VersionVector {
 		
 		return res;
 	}
+
+	public String toStringForTesting() {
+		String res = "";
+		
+		Iterator<Integer> it = (vector.keySet()).iterator();
+		int id;
+		
+		while(it.hasNext()) {
+			id = it.next();
+			
+			res += id + " " + vector.get(id);
+
+			if(it.hasNext()) {
+				res += "\n";
+			}
+		}
+		
+		return res;		
+	}
 	
 }

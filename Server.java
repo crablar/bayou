@@ -27,9 +27,9 @@ public class Server {
 	private HashMap<Socket, PrintWriter> ostreams;		
 	private Playlist playlist;
 	private VersionVector versionVector;
-	private Log write_log;						//a log of writes that haven't been committed
-	private Log rollbackLog;							//a log of all writes that have not been garbage collected
-	private int csn;
+	private Log uncommittedWrites;						//a log of writes that haven't been committed
+	private Log committedWrites;						//a log of all writes that have not been garbage collected
+	private long largestCSN;
 	private boolean isPrimary;							//says whether this server is the primary
 	private ArrayList<Integer> lastContacts;
 	private boolean freeForEntropy;
@@ -43,8 +43,8 @@ public class Server {
 		ostreams = new HashMap<Socket, PrintWriter>();
 		playlist = new Playlist();
 		versionVector = new VersionVector();
-		write_log = new Log();					//the tentative writes to this server
-		rollbackLog = new Log();						//the stable writes that this server is aware of
+		uncommittedWrites = new Log();					//the tentative writes to this server
+		committedWrites = new Log();						//the stable writes that this server is aware of
 		
 		lastContacts = new ArrayList<Integer>();
 		freeForEntropy = true;
@@ -161,12 +161,14 @@ public class Server {
 	}
 
 	public void printLog() {
-		//TODO
+		System.out.println("Committed writes for server " + sID + committedWrites);
+		System.out.println("Uncommitted writes for server " + sID + uncommittedWrites);
 	}
 
 	
 	public void printPlaylist() {
 		System.out.println(playlist);
+		System.out.println(versionVector.toStringForTesting());
 	}
 
 	public String toString()
@@ -177,26 +179,56 @@ public class Server {
 	public synchronized void addToPlaylist(String song, String url) 
 	{
 		long acceptStamp = System.currentTimeMillis();
-		Write w = new Write(acceptStamp, sID, false, "add " + song + " " + url);
+		Write w;
+		if(isPrimary)
+		{
+			largestCSN = acceptStamp;
+			w = new Write(acceptStamp, largestCSN, sID, isPrimary, "add", song, url);
+			committedWrites.log(w);
+		}
+		else
+		{
+			w = new Write(acceptStamp, Constants.INFINITY, sID, isPrimary, "add", song, url);
+			uncommittedWrites.log(w);
+		}
 		versionVector.changeLatestAccept(sID, acceptStamp);
-		write_log.log(w);
 		playlist.add(song, url);
 	}
 
 
 	public synchronized void editPlaylist(String song, String url) {
 		long acceptStamp = System.currentTimeMillis();
-		Write w = new Write(acceptStamp, sID, false, "edit " + song + " " + url);
+		Write w; 
+		if(isPrimary)
+		{
+			largestCSN = acceptStamp;
+			w = new Write(acceptStamp, largestCSN, sID, isPrimary, "edit",song, url);
+			committedWrites.log(w);
+		}
+		else
+		{
+			w = new Write(acceptStamp, Constants.INFINITY, sID, isPrimary, "edit", song, url);
+			uncommittedWrites.log(w);
+		}
 		versionVector.changeLatestAccept(sID, acceptStamp);
-		write_log.log(w);
 		playlist.edit(song, url);
 	}
 
 	public synchronized void deleteFromPlaylist(String song) {
 		long acceptStamp = System.currentTimeMillis();
-		Write w = new Write(acceptStamp, sID, false, "delete " + song);
+		Write w;
+		if(isPrimary)
+		{
+			largestCSN = acceptStamp;
+			w = new Write(acceptStamp, largestCSN, sID, isPrimary, "delete", song, null);
+			committedWrites.log(w);
+		}
+		else
+		{
+			w = new Write(acceptStamp, Constants.INFINITY, sID, isPrimary, "delete", song, null);
+			uncommittedWrites.log(w);
+		}
 		versionVector.changeLatestAccept(sID, acceptStamp);
-		write_log.log(w);
 		playlist.delete(song);		
 	}
 	
@@ -313,7 +345,7 @@ public class Server {
 	}
 	
 	public synchronized void basic_anti_entropy_protocol(Socket otherSock, VersionVector r_vector) {
-		Iterator<Write> it = write_log.iterator();
+		Iterator<Write> it = uncommittedWrites.iterator();
 		Write nextWrite;
 		
 		if(it.hasNext()) {
