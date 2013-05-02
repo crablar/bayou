@@ -25,7 +25,7 @@ public class Runner
 		System.out.println("Hello Chao.  Welcome to Bayou.");
 		
 		args = new String[1];	
-		args[0] = "playlist_script";
+		args[0] = "clienttest_script";
 		
 		if(args == null)
 			scanner = new Scanner(System.in);

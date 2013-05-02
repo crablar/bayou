@@ -38,7 +38,6 @@ public class Write implements Comparable {
 		tokens.close();
 	}
 
-	@Override
 	public int compareTo(Object other)
 	{
 		Write otherWrite = (Write)other;

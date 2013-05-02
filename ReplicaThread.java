@@ -72,8 +72,12 @@ public class ReplicaThread extends Thread {
 			try {
 				in.close();
 				sock.close();
-			} catch (NullPointerException | IOException e) {
+			} catch (NullPointerException e) {
 				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			catch(IOException e)
+			{
 				e.printStackTrace();
 			}
 		}

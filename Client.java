@@ -12,6 +12,7 @@ public class Client {
 	private PrintWriter ostream;
 	private BufferedReader in;
 	private Playlist cachedPlaylist;	//for "read your writes"
+	private int connectedServerID;
 
 	public Client(Integer cID, Integer port) {
 		this.cID = cID;
@@ -46,7 +47,10 @@ public class Client {
 				String line;
 				while((line = in.readLine()) != null)
 				{
-					System.out.println(this + ": " + line);
+					if(line.startsWith("serverConnect"))
+						connectedServerID = Integer.parseInt(line.split(" ")[1]);
+					else
+						handleServerMessage(line);
 				}
 			}
 			catch(SocketException e)
@@ -58,6 +62,10 @@ public class Client {
 				e.printStackTrace();
 			}
 		}		
+	}
+
+	private void handleServerMessage(String line) {
+		System.out.println(this + ": message from " + connectedServerID + ":\n" + line);
 	}
 
 	public void userRequest(String[] cmdArgs) {
