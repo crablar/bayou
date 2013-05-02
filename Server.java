@@ -543,40 +543,16 @@ public class Server {
 		clientWriter =  new PrintWriter(outputStream);
 	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	public void sendStabilityResponse(int previousServer, long timeOfLastDisconnect,
+			long lastSafeCSN)
+	{
+		//Don't think we need lastSafeCSN
+		boolean stable = versionVector.getStamp(previousServer) >= timeOfLastDisconnect;
+		if(stable)
+			clientWriter.println("playlistStabilityResponse: stable");
+		else
+			clientWriter.println("playlistStabilityResponse: unstable");
+	}
 }
+
+

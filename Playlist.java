@@ -19,9 +19,20 @@ public class Playlist {
 	
 	public String toString()
 	{
-		String result = "Playlist:";
+		String result = "";
 		for(String s : map.keySet())
 			result +=  "\n" + s + " " + map.get(s);
+		return result;
+	}
+	
+	public String toStringForCache()
+	{
+		String result = "User Playlist:";
+		for(String s : map.keySet())
+		{
+			if(!map.get(s).equals("DELETED"))
+				result +=  "\n" + s + " " + map.get(s);
+		}
 		return result;
 	}
 

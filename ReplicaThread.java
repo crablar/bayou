@@ -115,6 +115,11 @@ public class ReplicaThread extends Thread {
 			String[] msgArgs = msg.split(" ", 2);
 			server.deleteFromPlaylist(msgArgs[1]);
 		}
+		else if(msg.startsWith("playlistStabilityRequest"))
+		{
+			String[] msgArgs = msg.split(" ");
+			server.sendStabilityResponse(Integer.parseInt(msgArgs[1]), Long.parseLong(msgArgs[2]), Long.parseLong(msgArgs[3]));
+		}
 			return true;
 	}
 	

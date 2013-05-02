@@ -25,7 +25,7 @@ public class Runner
 		System.out.println("Hello Chao.  Welcome to Bayou.");
 		
 		args = new String[1];	
-		args[0] = "clienttest_script";
+		args[0] = "readwritestest_script";
 		
 		if(args == null)
 			scanner = new Scanner(System.in);
@@ -129,6 +129,15 @@ public class Runner
 			c.printConnections();
 	}
 	
+	private static void printServerPlaylists()
+	{
+		for(Integer sID : servers.keySet())
+		{
+			System.out.print("Server " + sID + " Playlist:");
+			servers.get(sID).printPlaylist();
+		}
+	}
+	
 	private static void quit()
 	{
 		System.exit(0);
@@ -160,6 +169,8 @@ public class Runner
 			else if(cmdArgs[0].equals("printLogs"))
 				for(Integer sID : servers.keySet())
 					printLog(sID);
+			else if(cmdArgs[0].equals("printServerPlaylists"))
+				printServerPlaylists();
 			else if(cmdArgs[0].equals("isolate"))
 				isolate(Integer.parseInt(cmdArgs[1]));
 			else if(cmdArgs[0].equals("leave"))
@@ -184,6 +195,8 @@ public class Runner
 				quit();
 			else if(cmdArgs[0].equals("switch to console mode"))
 				scanner = new Scanner(System.in);
+			else
+				System.out.println("*******INVALID INPUT********");
 		}
 	}
 

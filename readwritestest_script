@@ -1,0 +1,17 @@
+join 0
+join 1
+startClient 0 0
+user 0 add Song song.mp3
+clientDisconnect 0
+clientReconnect 0 1
+user 0 printPlaylist
+printServerPlaylists
+user 0 add Tune tune.mp3
+clientDisconnect 0
+clientReconnect 0 0
+user 0 delete Tune tune.mp3
+clientDisconnect 0
+clientReconnect 0 1
+user 0 printPlaylist
+printServerPlaylists
+quit

@@ -10,5 +10,6 @@ public abstract class Constants {
 	public static final String entropy_finish_msg       = "Finished_Server_Writes";
 	
 	public static final long INFINITY = -1;
+	public static final int NO_CONNECTION = -1;
 	
 }

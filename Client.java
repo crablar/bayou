@@ -13,9 +13,16 @@ public class Client {
 	private BufferedReader in;
 	private Playlist cachedPlaylist;	//for "read your writes"
 	private int connectedServerID;
+	private int previousServer;
+	private long timeOfLastDisconnect;
+	private long lastSafeCSN;
+	private boolean serverUpToDate;
+	
 
 	public Client(Integer cID, Integer port) {
 		this.cID = cID;
+		serverUpToDate = true;
+		previousServer = Constants.NO_CONNECTION;
 		cachedPlaylist = new Playlist();
 		try {
 			sock = new Socket("localhost", port);
@@ -31,7 +38,7 @@ public class Client {
 				}
 			};
 			Thread listenThread = new Thread(listener);
-			listenThread.start();
+			//listenThread.start();
 		} catch (SocketException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -66,6 +73,13 @@ public class Client {
 
 	private void handleServerMessage(String line) {
 		System.out.println(this + ": message from " + connectedServerID + ":\n" + line);
+		if(line.startsWith("playlistStabilityResponse"))
+		{
+			if(line.split(" ")[1].equals("stable"))
+				serverUpToDate = true;
+			else
+				serverUpToDate = false;
+		}
 	}
 
 	public void userRequest(String[] cmdArgs) {
@@ -85,19 +99,22 @@ public class Client {
 	}
 	
 	private void playlistPrint(){
-		ostream.println("printPlaylist " + cID);
+		System.out.println(cachedPlaylist.toStringForCache());
 	}
 	
 	private void playlistEdit(String song, String url) {
 		ostream.println("edit " + song + " " + url);
+		cachedPlaylist.edit(song, url);
 	}
 
 	private void playlistDelete(String song) {
 		ostream.println("delete " + song);
+		cachedPlaylist.edit(song, "DELETED");
 	}
 
 	private void playlistAdd(String song, String url) {
 		ostream.println("add " + song + " " + url);
+		cachedPlaylist.add(song, url);
 	}
 
 	public String toString() {
@@ -105,7 +122,10 @@ public class Client {
 	}
 
 	public void disconnect() {
-		savePlaylistToCache();
+		serverUpToDate = false;
+		previousServer = this.connectedServerID;
+		connectedServerID = Constants.NO_CONNECTION;
+		timeOfLastDisconnect = System.currentTimeMillis();
 		try {
 			ostream.println("client disconnecting");
 			ostream.close();
@@ -137,6 +157,19 @@ public class Client {
 				ostream = new PrintWriter(sock.getOutputStream(), true);
 				in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
 				ostream.println("I'm a client");
+				Runnable updateChecker = new Runnable(){
+					public void run() {
+						while(!serverUpToDate)
+						{
+							checkPlaylistStability();
+							try {
+								Thread.sleep(1000);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}}};
+				Thread updateThread = new Thread(updateChecker);
+				//updateThread.start();
 			} catch (SocketException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -145,9 +178,8 @@ public class Client {
 		}
 	}
 
-	private void savePlaylistToCache() {
-		// get uncommitted writes?
-		
+	private void checkPlaylistStability() {
+		ostream.println("playlistStabilityRequest " + previousServer + " " + timeOfLastDisconnect + " " + lastSafeCSN);
 	}
 
 	private void addShutdownHooks(final Client client) {
