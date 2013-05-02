@@ -143,9 +143,9 @@ public class ReplicaThread extends Thread {
 					server.print("---------> Beging entropy from wrong server!");
 				}
 			}
-			else if(msg.startsWith(Constants.entropyReject_msg)) {
-				server.startEntropySession();
-			}
+//			else if(msg.startsWith(Constants.entropyReject_msg)) {
+//				server.startEntropySession();
+//			}
 			else if(msg.startsWith(Constants.entropyAck_msg)) {
 				server.setFreeForEntropy(false);
 				

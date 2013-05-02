@@ -2,6 +2,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Scanner;
+import java.util.Stack;
 
 
 /**
@@ -25,7 +26,7 @@ public class Runner
 		System.out.println("Hello Chao.  Welcome to Bayou.");
 		
 		args = new String[1];	
-		args[0] = "readwritestest_script";
+		args[0] = "bigentropy_script";
 		
 		if(args == null)
 			scanner = new Scanner(System.in);
@@ -115,10 +116,31 @@ public class Runner
 		servers.get(sID).startEntropySession();
 	}
 	
+	private static void entropyOverEveryone(long duration_ms, int minIterations)
+	{
+		long startTime = System.currentTimeMillis();
+		while(System.currentTimeMillis() - startTime < duration_ms || 0 < minIterations--)			
+			for(Server s : servers.values())
+				for(int i = 0; i < s.getNumConnections(); i++)
+				{
+					s.startEntropySession();
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+	}
+	
 	private static void delay()
 	{
-		long t = System.currentTimeMillis();
-		while(System.currentTimeMillis() - delay_interval < t);
+		try {
+			Thread.sleep(delay_interval);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	private static void printConnections()
@@ -135,6 +157,7 @@ public class Runner
 		{
 			System.out.print("Server " + sID + " Playlist:");
 			servers.get(sID).printPlaylist();
+			System.out.println();
 		}
 	}
 	
@@ -147,6 +170,15 @@ public class Runner
 	{
 		while(true)
 		{
+			if(paused)
+			{
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
 			if(!scanner.hasNext())
 				break;
 			delay();
@@ -187,6 +219,11 @@ public class Runner
 				printConnections();
 			else if(cmdArgs[0].equals("startEntropy"))
 				testEntropy(Integer.parseInt(cmdArgs[1]));
+			else if(cmdArgs[0].equals("entropyEveryone"))
+				if(cmdArgs.length > 1)
+					entropyOverEveryone(Long.parseLong(cmdArgs[1]), 0);
+				else
+					entropyOverEveryone(0, 2);
 			else if(cmdArgs[0].equals("pause"))
 				paused = true;
 			else if(cmdArgs[0].equals("continue"))

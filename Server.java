@@ -330,7 +330,7 @@ public class Server {
 	//Sender calls this
 	public synchronized void startEntropySession() {
 		if(freeForEntropy) {
-
+			
 			if(lastContacts.size() == socks.keySet().size()) {
 				lastContacts.clear();
 			}
@@ -344,7 +344,7 @@ public class Server {
 
 			if(lastContacts.size() > 0) {
 				Socket socket = socks.get(lastContacts.get(lastContacts.size() - 1));
-
+				System.out.println(this + ": " + port + " " + socket.getPort());
 				if(socket != null) {
 					PrintWriter dout = (PrintWriter)ostreams.get(socket);
 
@@ -477,6 +477,8 @@ public class Server {
 				else {
 					//committedWrite = committedWrites.removeWrite(nextWrite.getAcceptStamp(), nextWrite.getServerId());
 					Write committedWrite = uncommittedWrites.removeWrite(nextWrite.getAcceptStamp(), nextWrite.getServerId());
+					if(committedWrite == null)
+						System.out.println("nextWrite is null!!!!");
 					committedWrite.setAcceptStamp(nextWrite.getAcceptStamp());
 					committedWrite.setCSN(nextWrite.getCSN());
 					committedWrite.setSID(nextWrite.getServerId());
@@ -553,6 +555,13 @@ public class Server {
 		else
 			clientWriter.println("playlistStabilityResponse: unstable");
 	}
+	
+	public int getNumConnections()
+	{ 
+		return ostreams.size();
+	}
+
+
 }
 
 

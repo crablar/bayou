@@ -1,0 +1,17 @@
+join 0
+join 1
+join 2
+recoverConnection 0 1
+recoverConnection 1 2
+startClient 0 0
+startClient 1 1
+startClient 2 2
+user 0 add song song.mp3
+user 1 add test test.mp3
+user 2 add funk funk.mp3
+entropyEveryone
+user 0 printPlaylist
+user 1 printPlaylist
+user 2 printPlaylist
+printServerPlaylists
+printLogs
