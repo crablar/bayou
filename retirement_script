@@ -1,0 +1,20 @@
+join 0 
+join 1
+join 2
+reconnect 2
+reconnect 1
+startClient 0 0
+startClient 1 1
+startClient 2 2
+user 0 add song song.mp2
+user 1 add fun fun.mpt
+user 2 add lakjf kkkkkk.mp3
+user 2 add KDJF jffjfj.mp32
+startEntropy 2
+printLogs
+printServerPlaylists
+leave 2
+startEntropy 0
+printLogs
+printServerPlaylists
+quit

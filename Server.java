@@ -268,7 +268,7 @@ public class Server {
 				playlist.delete(song);		
 			}
 			else {
-				System.out.println("--------------------> Song does not exist!");
+				//System.out.println("--------------------> Song does not exist!");
 			}
 		}
 	}
@@ -447,22 +447,22 @@ public class Server {
 					nextWrite = it.next();
 
 					if(r_vector.containsEntry(nextWrite.getServerId())) {
-						if(nextWrite.getServerId() != 0 && nextWrite.getAcceptStamp() <= r_vector.getStamp(nextWrite.getServerId())) {
-							sendCommitNotification(receiver_sock, nextWrite, msg_num);
-						}
-						else {
+//						if(nextWrite.getServerId() != 0 && nextWrite.getAcceptStamp() <= r_vector.getStamp(nextWrite.getServerId())) {
+//							sendCommitNotification(receiver_sock, nextWrite, msg_num);
+//						}
+//						else {
 							sendWrite(receiver_sock, nextWrite, msg_num);
-						}
+//						}
 
 						msg_num++;
 					}
 					else if(retired.containsEntry(nextWrite.getServerId())) {
-						if(nextWrite.getServerId() != 0 && nextWrite.getAcceptStamp() <= retired.getStamp(nextWrite.getServerId())) {
-							sendCommitNotification(receiver_sock, nextWrite, msg_num);
-						}
-						else {
+//						if(nextWrite.getServerId() != 0 && nextWrite.getAcceptStamp() <= retired.getStamp(nextWrite.getServerId())) {
+//							sendCommitNotification(receiver_sock, nextWrite, msg_num);
+//						}
+//						else {
 							sendWrite(receiver_sock, nextWrite, msg_num);
-						}
+//						}
 
 						msg_num++;
 					}
@@ -602,7 +602,10 @@ public class Server {
 			}
 
 			if(!retired_list.containsEntry(nextWrite.getServerId())) {
-				versionVector.changeifMax(nextWrite.getServerId(), nextWrite.getAcceptStamp());
+				if(versionVector.containsEntry(nextWrite.getServerId()))
+					versionVector.changeifMax(nextWrite.getServerId(), nextWrite.getAcceptStamp());
+				else
+					versionVector.addEntry(nextWrite.getServerId(), nextWrite.getAcceptStamp());
 			}
 		}
 

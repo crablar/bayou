@@ -1,17 +1,19 @@
 join 0
 join 1
+join 2
 startClient 0 0
+reconnect 1
 user 0 add Song song.mp3
+user 0 add deleteMe deleteme.mp3
 clientDisconnect 0
+startEntropy 0
+startEntropy 1
+startEntropy 1
 clientReconnect 0 1
-user 0 printPlaylist
-printServerPlaylists
-user 0 add Tune tune.mp3
+user 0 edit deleteMe deleteMe.mp3
 clientDisconnect 0
-clientReconnect 0 0
-user 0 delete Tune tune.mp3
-clientDisconnect 0
-clientReconnect 0 1
+clientReconnect 0 2
+startEntropy 1
 user 0 printPlaylist
 printServerPlaylists
 quit

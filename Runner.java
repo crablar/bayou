@@ -25,11 +25,9 @@ public class Runner
 	{
 		System.out.println("Hello Chao.  Welcome to Bayou.");
 		
-//		args = new String[1];	
-//		args[0] = "multientropy_script";
-		args = null;
-		
-		if(args == null)
+		args = new String[1];	
+		args[0] = "retirement_script";
+		if(args.length == 0)
 			scanner = new Scanner(System.in);
 		else
 		{
@@ -113,7 +111,7 @@ public class Runner
 	
 	private static void leave(Integer sID)
 	{
-		//TODO
+		retire(sID);
 	}
 	
 
@@ -239,7 +237,7 @@ public class Runner
 				paused = false;
 			else if(cmdArgs[0].equals("quit"))
 				quit();
-			else if(cmdArgs[0].equals("switch to console mode"))
+			else if(command.equals("switch to console mode"))
 				scanner = new Scanner(System.in);
 			else
 				System.out.println("*******INVALID INPUT********");
