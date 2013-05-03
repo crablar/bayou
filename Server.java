@@ -8,6 +8,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -38,6 +39,8 @@ public class Server {
 	private HashMap<Integer, Write> entropy_writes;
 	private int entropy_size;
 	private int max_otherID;
+	
+	private int num_connected_servers;
 
 	private VersionVector retired_list;
 	private boolean retired;
@@ -64,6 +67,7 @@ public class Server {
 		versionVector.addEntry(sID, 0);
 
 		retired = false;
+		num_connected_servers = 0;
 		try
 		{
 			recvsock = new ServerSocket(port);
@@ -310,6 +314,7 @@ public class Server {
 
 		retired_list.remove(otherID);
 		versionVector.addEntry(otherID, 0);
+		num_connected_servers++;
 	}
 
 	public void printConnections() {
@@ -353,13 +358,15 @@ public class Server {
 		}
 		socks.clear();
 		ostreams.clear();
-
+		num_connected_servers = 0;
 	}
 
 	public synchronized void breakConnectionWith(Integer sB) {
 		Socket sockB = socks.remove(sB);
-		if(sockB != null)
+		if(sockB != null) {
 			ostreams.remove(sockB).close();
+			num_connected_servers--;
+		}
 		else
 			System.out.println("failure in breakconnection");
 	}
@@ -372,7 +379,11 @@ public class Server {
 	public synchronized void startEntropySession() {
 		if(freeForEntropy) {
 
-			if(lastContacts.size() == socks.keySet().size()) {
+			System.out.println("---------------------------------------");
+			System.out.println(Arrays.toString(lastContacts.toArray()));
+			System.out.println("---------------------------------------");
+			
+			if(lastContacts.size() == num_connected_servers) {
 				lastContacts.clear();
 			}
 
@@ -566,6 +577,7 @@ public class Server {
 				}
 				else {
 
+					System.out.println("W: " + nextWrite);
 					//committedWrite = committedWrites.removeWrite(nextWrite.getAcceptStamp(), nextWrite.getServerId());
 					Write committedWrite = uncommittedWrites.removeWrite(nextWrite.getAcceptStamp(), nextWrite.getServerId());
 					committedWrite.setAcceptStamp(nextWrite.getAcceptStamp());
@@ -597,6 +609,7 @@ public class Server {
 		}
 
 		entropy_writes.clear();
+		entropy_size = Integer.MAX_VALUE;
 		setFreeForEntropy(true);
 		rePopulatePlaylist();
 

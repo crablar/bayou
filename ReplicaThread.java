@@ -78,6 +78,7 @@ public class ReplicaThread extends Thread {
 				{
 					System.out.println("ReplicaThread for " + server + " closing");
 					removeMetaDataFor();
+					break;
 
 				}
 				catch (IOException e)
