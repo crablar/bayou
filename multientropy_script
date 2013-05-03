@@ -1,0 +1,20 @@
+join 0
+join 1
+join 2
+reconnect 1
+reconnect 2
+startClient 0 0
+startClient 1 1
+user 0 add test test.p
+user 1 add test2 test2.p
+user 1 add test3 test3.p
+startEntropy 0
+startEntropy 1
+startEntropy 0
+startEntropy 1
+printLogs
+printServerPlaylists
+startEntropy 0
+printLogs
+printServerPlaylists
+quit
