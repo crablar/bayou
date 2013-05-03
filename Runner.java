@@ -25,8 +25,9 @@ public class Runner
 	{
 		System.out.println("Hello Chao.  Welcome to Bayou.");
 		
-		args = new String[1];	
-		args[0] = "retirement_script";
+//		args = new String[1];	
+//		args[0] = "entropy_script";
+		args = null;
 		
 		if(args == null)
 			scanner = new Scanner(System.in);

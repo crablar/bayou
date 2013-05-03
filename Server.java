@@ -36,9 +36,10 @@ public class Server {
 	private ArrayList<Integer> lastContacts;
 	private boolean freeForEntropy;
 	private HashMap<Integer, Write> entropy_writes;
+	private int entropy_size;
 	private int max_otherID;
 
-	private ArrayList<Integer> retired_list;
+	private VersionVector retired_list;
 	private boolean retired;
 
 	public Server(int p, int sID)
@@ -59,7 +60,7 @@ public class Server {
 		lastContacts = new ArrayList<Integer>();
 		freeForEntropy = true;
 
-		retired_list = new ArrayList<Integer>();
+		retired_list = new VersionVector();
 		versionVector.addEntry(sID, 0);
 
 		retired = false;
@@ -376,7 +377,9 @@ public class Server {
 			}
 
 			for(Integer i: socks.keySet()) {
+				System.out.println("I Contact: " + i);
 				if(i <= this.max_otherID && !lastContacts.contains(i)){
+					System.out.println("I Contact: " + i);
 					lastContacts.add(i);
 					break;
 				}	
@@ -401,21 +404,6 @@ public class Server {
 		}
 	}
 
-	private String retiredString() {
-		String res = "";
-		Iterator<Integer> it = this.retired_list.iterator();
-
-		while(it.hasNext()) {
-			res += it.next();
-
-			if(it.hasNext()) {
-				res += ":::";
-			}
-		}
-
-		return res;
-	}
-
 	//Receiver does this
 	public synchronized void sendResponseToEntropyRequest(Socket otherSock) {
 		PrintWriter dout = (PrintWriter)ostreams.get(otherSock);
@@ -424,9 +412,10 @@ public class Server {
 
 		if(freeForEntropy) {
 
-			msg = Constants.entropyAck_msg + " " + this.sID + " " + this.largestCSN + " " + this.versionVector.toString() + ";;;" + retiredString();
+			msg = Constants.entropyAck_msg + " " + this.sID + " " + this.largestCSN + " " + this.versionVector.toString() + ";;;" + this.retired_list;
 			//			this.entropy_msg_num = 0;	
 			entropy_writes = new HashMap<Integer, Write>();
+			entropy_size = Integer.MAX_VALUE;
 			setFreeForEntropy(false);
 		}
 		else {
@@ -436,7 +425,7 @@ public class Server {
 		dout.println(msg);
 	}
 
-	public synchronized void basic_anti_entropy_protocol(Socket receiver_sock, VersionVector r_vector, ArrayList<Integer> retired, long r_csn) {
+	public synchronized void basic_anti_entropy_protocol(Socket receiver_sock, VersionVector r_vector, VersionVector retired, long r_csn) {
 		int msg_num = 1;
 		Iterator<Write> it; 
 		Write nextWrite;
@@ -447,21 +436,28 @@ public class Server {
 			if(it.hasNext()) {
 				while(it.hasNext()) {
 					nextWrite = it.next();
-					
-					System.out.println("W ID: " + nextWrite.getServerId());
 
 					if(r_vector.containsEntry(nextWrite.getServerId())) {
 						if(nextWrite.getAcceptStamp() <= r_vector.getStamp(nextWrite.getServerId())) {
 							sendCommitNotification(receiver_sock, nextWrite, msg_num);
 						}
 						else {
-							System.out.println("*********************************");
 							sendWrite(receiver_sock, nextWrite, msg_num);
 						}
 
 						msg_num++;
 					}
-					else if(!retired.contains(nextWrite.getServerId())) {
+					else if(retired.containsEntry(nextWrite.getServerId())) {
+						if(nextWrite.getAcceptStamp() <= retired.getStamp(nextWrite.getServerId())) {
+							sendCommitNotification(receiver_sock, nextWrite, msg_num);
+						}
+						else {
+							sendWrite(receiver_sock, nextWrite, msg_num);
+						}
+
+						msg_num++;
+					}
+					else if(!retired.containsEntry(nextWrite.getServerId())) {
 						System.out.println("Retired writes.....................");
 						sendWrite(receiver_sock, nextWrite, msg_num);
 
@@ -492,9 +488,14 @@ public class Server {
 						msg_num++;
 					}
 				}
-				else if(!retired.contains(nextWrite.getServerId())) {
+				else if(retired.containsEntry(nextWrite.getServerId())) {
+					if(retired.getStamp(nextWrite.getServerId()) < nextWrite.getAcceptStamp()) {
+						sendWrite(receiver_sock, nextWrite, msg_num);
+						msg_num++;
+					}
+				}
+				else if(!retired.containsEntry(nextWrite.getServerId())) {
 					sendWrite(receiver_sock, nextWrite, msg_num);
-
 					msg_num++;
 				}
 
@@ -526,41 +527,51 @@ public class Server {
 	}
 
 	public synchronized void commitExistingWrite(int msg_num, long w_accept_stamp, int w_server_Id, long w_csn) {
-		Write existing_write = new Write(w_accept_stamp, w_csn, w_server_Id, true, null, null, null);
+		Write existing_write = new Write(w_accept_stamp, w_csn, w_server_Id, true, Constants.commit_existing, null, null);
 
 		entropy_writes.put(msg_num, existing_write);
+
+		if(entropy_writes.size() == entropy_size) {
+			notifyAll();
+		}
 	}
 
 	public synchronized void addServerWrite(int msg_num, Write update) {
 		entropy_writes.put(msg_num, update);
+
+		if(entropy_writes.size() == entropy_size) {
+			notifyAll();
+		}
 	}
 
 	public synchronized void finishEntropyProcessing(int num_msgs, int otherID, Socket sock) {
 		//		Write nextWrite;
 		//		Write committedWrite;
 
-		System.out.println("I AM " + sID);
-		
+		entropy_size = num_msgs;
+
+		while(entropy_writes.size() != entropy_size) {
+			try {
+				wait();
+			}
+			catch(InterruptedException e) {}
+		}
+
 		for(int i = 1; i<=num_msgs; i++) {
 			Write nextWrite = entropy_writes.get(i);
 
-
 			if(nextWrite.isCommitted()) {
-				if(nextWrite.getUpdateCmd() != null) {
+				if(!(nextWrite.getUpdateCmd()).equals(Constants.commit_existing)) {
 					committedWrites.log(nextWrite);
 				}
 				else {
+
 					//committedWrite = committedWrites.removeWrite(nextWrite.getAcceptStamp(), nextWrite.getServerId());
 					Write committedWrite = uncommittedWrites.removeWrite(nextWrite.getAcceptStamp(), nextWrite.getServerId());
-					if(committedWrite == null) {
-						committedWrite = nextWrite;
-					}
-					else {
-						committedWrite.setAcceptStamp(nextWrite.getAcceptStamp());
-						committedWrite.setCSN(nextWrite.getCSN());
-						committedWrite.setSID(nextWrite.getServerId());
-						committedWrite.setCommitted(true);
-					}
+					committedWrite.setAcceptStamp(nextWrite.getAcceptStamp());
+					committedWrite.setCSN(nextWrite.getCSN());
+					committedWrite.setSID(nextWrite.getServerId());
+					committedWrite.setCommitted(true);
 
 					committedWrites.log(committedWrite);
 				}
@@ -580,22 +591,24 @@ public class Server {
 				}
 			}
 
-			versionVector.changeifMax(nextWrite.getServerId(), nextWrite.getAcceptStamp());
+			if(!retired_list.containsEntry(nextWrite.getServerId())) {
+				versionVector.changeifMax(nextWrite.getServerId(), nextWrite.getAcceptStamp());
+			}
 		}
 
 		entropy_writes.clear();
 		setFreeForEntropy(true);
 		rePopulatePlaylist();
-		
+
 		sendUpdatesReceivedAck(sock);
 	}
-	
+
 	private synchronized void sendUpdatesReceivedAck(Socket sock) {
 		PrintWriter dout = (PrintWriter)ostreams.get(sock);
 		String msg = Constants.update_received_ack + " " + sID;
 		dout.println(msg);
 	}
-	
+
 	public synchronized void processUpdatesReceivedAck() {
 		if(retired) {
 			isolate();
@@ -628,10 +641,11 @@ public class Server {
 			playlist.delete(w.getSong());
 		}
 		else if((Constants.retirement_msg).equals(w.getUpdateCmd())) {
-			versionVector.remove(w.getServerId());
-			if(!retired_list.contains(w.getServerId())) {
-				retired_list.add(w.getServerId());
+			if(!retired_list.containsEntry(w.getServerId())) {
+				retired_list.addEntry(w.getServerId(), versionVector.getStamp(w.getServerId()));
 			}
+
+			versionVector.remove(w.getServerId());
 		}
 	}
 

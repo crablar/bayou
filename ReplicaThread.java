@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -21,6 +22,8 @@ public class ReplicaThread extends Thread {
 	private boolean listeningToClient;
 	private Integer otherID;
 
+	private final int TIME_OUT = 20000;
+
 	public ReplicaThread(Server serv, Socket sock)
 	{
 		otherID = -1;
@@ -34,36 +37,54 @@ public class ReplicaThread extends Thread {
 
 	public void run()
 	{
-		try
-		{
+		try {
 			in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-			String line;
-			boolean keepGoing;
-			while((line = in.readLine()) != null)
-			{
-				if(line.startsWith("I'm a client"))
-				{
-					listeningToClient = true;
-					server.setClientWriter(sock.getOutputStream());
-					server.messageClient("I'm listening to you!");
-				} 
-				if(listeningToClient)
-					keepGoing = handleClientMessage(line);
-				else 
-					keepGoing = handleReplicaMessage(line);
-				if(!keepGoing)
-					break;
-			}
+		} catch (IOException e1) {
+			e1.printStackTrace();
 		}
-		catch(SocketException e)
-		{
-			System.out.println("ReplicaThread for " + server + " closing");
-			removeMetaDataFor();
+		String line;
+		boolean keepGoing = true;
 
-		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
+		try {
+			while(keepGoing) {
+				try {
+					while((line = in.readLine()) != null)
+					{
+						if(line.startsWith("I'm a client"))
+						{
+							listeningToClient = true;
+							server.setClientWriter(sock.getOutputStream());
+							server.messageClient("I'm listening to you!");
+							sock.setSoTimeout(TIME_OUT);
+						} 
+						if(listeningToClient)
+							keepGoing = handleClientMessage(line);
+						else 
+							keepGoing = handleReplicaMessage(line);
+						if(!keepGoing)
+							break;
+					}
+				}
+				catch(SocketTimeoutException e) {
+					System.out.println("Starting entropy.......");
+					server.startEntropySession();
+					try {
+						sock.setSoTimeout(TIME_OUT);
+					} catch (SocketException e1) {
+						e1.printStackTrace();
+					}
+				}
+				catch(SocketException e)
+				{
+					System.out.println("ReplicaThread for " + server + " closing");
+					removeMetaDataFor();
+
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
 		}
 		finally
 		{
@@ -160,17 +181,17 @@ public class ReplicaThread extends Thread {
 			String[] vectors = (tokens.nextLine()).split(";;;");
 
 			VersionVector r_vector = new VersionVector(vectors[0]);
-			ArrayList<Integer> retires;
-			
+			VersionVector retired;
+
 			if(vectors.length > 1) {
-				retires = stringToList(vectors[1]);
+				retired = new VersionVector(vectors[1]);
 			}
 			else {
-				retires = new ArrayList<Integer>();
+				retired = new VersionVector();
 			}
 
 			if(this.otherID == server_Id) {
-				server.basic_anti_entropy_protocol(sock, r_vector, retires, r_csn);
+				server.basic_anti_entropy_protocol(sock, r_vector, retired, r_csn);
 			}
 			else {
 				server.print("-------------> entropy ACk to wrong sender!");
@@ -212,7 +233,7 @@ public class ReplicaThread extends Thread {
 		}
 		else if(msg.startsWith(Constants.update_received_ack)) {
 			int id = Integer.parseInt(msg.split(" ")[1]);
-			
+
 			if(id == otherID) {
 				server.processUpdatesReceivedAck();
 			}
@@ -233,7 +254,7 @@ public class ReplicaThread extends Thread {
 				res.add(Integer.parseInt(vals[i]));
 			}
 		}
-		
+
 		return res;
 	}
 
