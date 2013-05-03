@@ -379,18 +379,16 @@ public class Server {
 	public synchronized void startEntropySession() {
 		if(freeForEntropy) {
 
-			System.out.println("---------------------------------------");
-			System.out.println(Arrays.toString(lastContacts.toArray()));
-			System.out.println("---------------------------------------");
+//			System.out.println("---------------------------------------");
+//			System.out.println(Arrays.toString(lastContacts.toArray()));
+//			System.out.println("---------------------------------------");
 			
 			if(lastContacts.size() == num_connected_servers) {
 				lastContacts.clear();
 			}
 
 			for(Integer i: socks.keySet()) {
-				System.out.println("I Contact: " + i);
 				if(i <= this.max_otherID && !lastContacts.contains(i)){
-					System.out.println("I Contact: " + i);
 					lastContacts.add(i);
 					break;
 				}	
@@ -449,7 +447,7 @@ public class Server {
 					nextWrite = it.next();
 
 					if(r_vector.containsEntry(nextWrite.getServerId())) {
-						if(nextWrite.getAcceptStamp() <= r_vector.getStamp(nextWrite.getServerId())) {
+						if(nextWrite.getServerId() != 0 && nextWrite.getAcceptStamp() <= r_vector.getStamp(nextWrite.getServerId())) {
 							sendCommitNotification(receiver_sock, nextWrite, msg_num);
 						}
 						else {
@@ -459,7 +457,7 @@ public class Server {
 						msg_num++;
 					}
 					else if(retired.containsEntry(nextWrite.getServerId())) {
-						if(nextWrite.getAcceptStamp() <= retired.getStamp(nextWrite.getServerId())) {
+						if(nextWrite.getServerId() != 0 && nextWrite.getAcceptStamp() <= retired.getStamp(nextWrite.getServerId())) {
 							sendCommitNotification(receiver_sock, nextWrite, msg_num);
 						}
 						else {
