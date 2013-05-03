@@ -1,0 +1,397 @@
+BAYOU ANTI-ENTROPY:
+
+Intro:
+1) Can "update anywhere"
+2) Need a way for replicas to converge 
+       --> Protocol to propogate updates introduced at one replica to all other replicas.
+       --> Bayou Anti-Entropy Protocol
+3) Two main features
+       --> Pair-wise communication between replicas
+       --> Ordered-exchange of update operations stored in per replica logs
+4) Features:
+	- Support for arbitrary communication topologies
+	- Operation over low bandwidth networks -> sending updates instead of data
+	- Incremental progress
+	- Eventual consistency
+	- Efficient storage management -> garbage collecting write-log
+	- Light-weight managaement of dynamic replica sets -> ----------------[connecting and retiring replicas by communicating with only one available replica]
+	- Arbitrary policies
+
+5) Dependency checks and Merge procedures
+	- For conflict detection and resolution
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+The BASIC Anti-Entropy ALGORITHM:
+1) GOAL: to bring two replicas "up-to-date" with each other
+2) MODEL:
+	- A STORAGE SYSTEM consisting of 
+		- Ordered log of updates/writes --> contain ALL WRITES from a CLIENT or SERVER
+		- Database                      --> RESULT of EXECUTING UPDATES
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3) RECEIVING A WRITE FROM CLIENT:
+	- Make a new WRITE Object
+		- Assign a monotonically increasing ACCEPT_STAMP --> can be time_stamp
+		- Assign the issuing SERVER ID
+		- The update/write itself
+	- Put the write in the WRITE_LOG
+	- Update the database in a order consistent with ACCEPT_ORDER
+		- ACCEPT_ORDER: If A and B are accepted by the same server, and A is accepted before B ==> A should APPEAR BEFORE B in the WRITE_LOG
+		                If A and B are NOT accepted by the SAME SERVER, the store then in the ORDER OF ACCEPT_STAMP
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+4) DESIGN CHOICES:
+	- One-way operation between pairs of servers => During a session only ONE SENDER and ONE RECEIVER ==> You can reverse the process after the session is over ==> NOT WISE!!
+	- Propogation of UPDATES
+	- Update propogation according to ACCEPT ORDER
+		- To maintain PREFIX PROPERTY  
+		==> Enables the use of VERSION VECTORS to what writes a server knows and what it does not 
+
+		==> R.V[x] = largest ACCEPT_STAMP of any WRITE KNOWN to R and ACCEPTED by X
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BASIC anti_entropy(S, R) {
+	Get R.V from the receiving vector R
+	
+	w = first_Write_In(S.Write_Log);
+
+	while(w) {
+	     If(R.V[w.server_id] < w.accept_stamp) {
+		SendWriteTo(R);
+	     }
+
+	     w = NextWriteIn(S.Write_Log);
+	}
+}
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+NOTE:
+1) Reconcilation between replicas CAN MAKE PROGRESS independently of WHERE the protocol may get INTERRUPTED.
+2) NEW WRITE ARRIVES at receiver:
+	- Immediately include in the write log  ==> -------------------------------------Need FIFO channel to not violate the PREFIX PROPERTY.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+EFFECTIVE WRITE LOG MANAGEMENT:
+1) An UPDATE can be discarded when the UPDATE is FULLY propogated to ALL REPLICAS.
+2) In Bayou, EACH REPLICA can INDEPENDENTLY decide when and how aggressively to PRUNE a PREFIX of its WRITE_LOG subject to the constraint that only STABLE writes are discarded.
+3) Storage vs. Bandwidth TRADE-OFF
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+WRITE STABILITY:
+1) STABLE WRITE = COMMITTED WRITE
+	- Position in write log will not change
+	- So, NEVER needs to be RE-EXECUTED at that server
+
+2) Bayou uses PRIMARY-COMMIT protocol.
+	- One PRIMARY replica    ===> Stabilize the POSITION of a WRITE in the LOG when it FIRST RECEIVES the write.
+
+3) PRIMARY RECEIVES A WRITE:
+	- Assign a COMMIT SEQUENCE NUMBER (CSN) to the Write  
+		==> Monotonically increasing 
+		==> Can be another time stamp
+		==> For UNCOMMITTED/TENTATIVE writes it is INFINITY (-1)
+	- COMMIT the POSITION of the WRITE in the LOG
+
+4) New Partial Order:  ==> STABLE ORDER ==> Maintains PREFIX PROPERTY
+	- Write A precedes write B if A.CSN < B.CSN
+	- If A and B are UNCOMMITTED ==> A precedes B if (A.server_Id == B.Server_Id) && (A.Accept_Stamp < B.Accept_Stamp)
+
+5) Committed Writes
+	- Totally ordered among themselves
+	- Ordered BEFORE UNCOMMITTED writes
+
+6) NON-PRIMARY replica receives a COMMITTED write in ANTI-ENTROPY:
+	- Write becomes STABLE at that replica
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+PROPOGATION of COMMITTED WRITES:
+1) Need to MAINTAIN the highest COMMIT SEQUENCE NUMBER known to the SEVER under CONSIDERATION.
+	- ASSUMING: Committed Writes are Propogated and RECEIVED in the order of COMMITTED SEQUENCE NUMBERS (COMMIT ORDER)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Slightly_Efficient_Anti_Entropy(S, R) {
+	Get R.V and R.CSN from the receiving server R
+
+	if(R.CSN < S.CSN) {
+	    w = FirstWriteIn(Committed_Writes);
+
+	    while(w) {
+	        If(w.accept_stamp <= R.V[w.server_Id]) {
+	             sendCommitNotification(R, w.accept_stamp, w.server_Id, w.CSN);
+                }
+                else {
+	             sendWrite(R, w);
+ 	        }
+ 	       
+		w = nextWriteIn(Committed_Writes);
+	    }
+	}
+
+	w = firstWriteIn(UnCommitted_Writes);
+	
+	while(w) {
+	    If(R.V[w.server_Id] < w.accept_stamp) {
+	        SendWrite(R, w);
+	    }
+	
+	    w = nextWriteIn(Uncommitted_Writes);
+	}
+}
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+WRITE LOG TRUNCATION:
+1) The new Anti-Entropy allows replicas to TRUNCATE ANY PREFIX of the STABLE/COMMITTED PART of the write log WHENEVER they desire or need to do so.
+	- May be truncate after the SIZE > some N
+2) TROUBLE:
+	- Sending server may have truncated the WRITES that are YET UNKNOWN to the receiver.
+
+3) To TEST whether a SENDER is MISSING writes needed FOR ANTI-ENTROPY:
+	- Maintains
+		==> An OMMITTED SEQUENCE NUMBER (OSN) = Largest COMMIT SEQUENCE NUMBER that was TRUNCATED
+		==> An OMITTED VERSION VECTOR (O)     = Version vector of the sevrer/SENDER when the WRITES WERE TRUNCATED.
+
+4) If S.OSN > R.CSN ===> Need FULL DATABASE TRANSFER
+	== Then, CAN CONTINUE with the REGULAR PROTOCOL
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Anti-Entropy_with_log_truncation(S, R) {
+	Get R.V and R.CSN from the receiving server R
+
+	if(R.CSN < S.OSN) {
+            rollback_DB = rollback(s.DB) to the state corresponding to S.O;
+	    sendDatabase(R, rollback_DB);
+	    sendOmittedVector(R, S.O);
+	    sendOSN(R, S.OSN);
+	}
+
+	if(R.CSN < S.CSN) {
+	    w = firstWriteIn(Committed_Writes);
+	
+	    while(w) {
+	       if(R.V[w.server_Id] >= w.accept_stamp) {
+	 	  sendCommitNotification(R, w.accept_stamp, w.server_Id, w.CSN);
+	       }
+	       else {
+		  sendWrite(R, w);
+	       }
+	
+	       w = nextWriteIn(Committed_Writes);
+	    }
+        }
+
+	w = firstWriteIn(UnCommitted_Writes);
+
+	while(w) {
+	    if(R.V[w.server_Id] < w.accept_stamp) {
+		sendWrite(R, w);
+	    }
+
+	    w = nextWriteIn(UnCommitted_Writes);
+	}
+}
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+NOTE: The Database, Version Vector, OSN MUST be SENT FULLY.
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+AT RECEIVER:
+
+receiver_Anti_Entropy(R, S) {
+	If(received a DB, Ommitted_Vector, OSN) {
+		w = firstWriteIn(write_log);
+
+		while(w) {
+		     if(w._accept_stam <= Ommitted_Vector[w.server_Id]) {
+			write_log.remove(w);
+		     }
+
+		     w = nextWriteIn(Write_log);
+		}
+
+		CopyFromTo(DB, My_DB);
+		setMy_O_Vector(Omitted_Vector);
+		setMy_OSN(OSN);
+	}
+
+	//Continue ... with REGULAR ANTI-ENTROPY
+
+}		
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ROLLING BACK the WRITE LOG:
+1) TWO SITUATIONS of rolling back in ANTI-ENTROPY session
+	- Sender Roll back for FULL DATABASE TRANSFER
+	- Receiver Roll back
+		==> AT MOST ONCE per anti-entropy session
+		==> Roll back to the position of THE EARLIEST WRITE it receives.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SESSION GUARANTEES:
+1) In addition to the partial propogation order required by the PREFIX PROPERTY, Bayou has TWO ADDITIONAL requirements:
+	- A CAUSAL ORDER to provide SESSION GUARANTEES to apps
+	- a TOTAL ORDER to ensure EVENTUAL CONSISTENCY of the replicas
+
+2) Bayou provides SESSION GUARANTEES to apps to MINIMIZE CLIENT OBSERVED inconsistencies when ACCESSING the SERVERS
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Paper 2:
+GOALS:
+1) replicated, weakly consistent storage system with LESS THAN IDEAL network connectivity
+2) App-specific mechanisms for conflict detection and resolution
+3) Ensuring replicas move towards eventual consistency
+	=> For this, servers must be able to roll back the effects of previously executed writes and redo them according to a global serialization order.
+4) Clients can observe the effects of ALL WRITES received by a server, including TENTATIVE WRITES WHOSE CONFLICTS HAVE NOT BEEN ULTIMATELY RESOLVED.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BASIC MODEL:
+1) Each DATA COLLECTION is replicated in FULL at EACH replica
+2) Clients interact with servers through Bayou API
+	- Two Basic Operations
+	- READ
+	- WRITE: insert, modify, delete
+3) Access to ONE SERVER per CLIENT is enough
+4) CLIENT:
+	- READ data from its corresponding SERVER
+	- SUBMIT writes to the server   ----------------------> Client does NOT have to WAIT after a WRITE is ACCEPTED until the write PROPOGATES
+5) Client not necessarily have to stay with a one server -----> CAN SWITCH SERVERS
+
+6) STORAGE SYSTEM:
+	- an ORDERED LOG of writes
+	- DATA resulting from execution of the Writes
+
+7) SERVER:
+	- Performs each Write LOCALLY resolving conflicts.
+	- Makes the EFFECTS of all known WRITES AVAILABLE for READING.
+	- Exchange WRITE OPERATIONS during anti-entropy SESSIONS ==> After session, the two SERVERS AGREE on the SET of writes and the ORDER in which TO PERFORM THEM.
+	- In the ABSENCE of NEW WRITES from CLIENTS, all servers will EVENTUALLY HOLD SAME DATA.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+REPLICA CONSISTENCY:
+1) Guarantees EVENTUAL CONSISTENCY
+2) All servers EVENTUALLY hold the SAME SET of writes in their LOGS, so will have SAME DATA CONTENTS.
+	=> Writes are performed in the SAME, WELL-DEFINED order at all SERVERS
+	=> Conflict detction and resolution are DETERMINISTIC ===> All servers resolve same conflicts in the same way.
+
+WRITE SUBMITTED BY CLIENT:
+1) Set the write to be UNCOMITTED/TENTATIVE
+	==> Ordered according to TIME_STAMPS assigned by T=their ACCEPTING SERVERS ==========> Monotonically increasing STAMPS ===> <TIME_STAMP, Server_Id> = Total order
+	==> Maintain LOGICAL CLOCKS ==> Synchronized with REAL-TIME SYSTEM CLOCK =======> May NEED to ADVANCE its LOGICAL CLOCK when WRITES are RECEVED during Anti-Entropy to PRESERVE CAUSAL ORDER
+2) Eventually, each write is COMMITTED
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+DYNAMIC REPLICA MANAGEMENT:
+1) Lighter weight mechanisms for server creation and retirement enables more flexible usage scenarios.
+2) In Bayou, servers can be CREATED and RETIRED by communicating with ANY AVAILABLE SERVER.
+      ==> Can be supported if VERSION VECTORS are UPDATED to INCLUDE new servers or EXCLUDE retired servers.
+3) DYNAMIC MANAGEMENT of VERSION VECTORS:
+   	   - Need a mechanism to UNIQUELY ASSIGN IDENTIFIERS to newly CREATED servers -------------------------> Can use WRITE ACCEPT STAMPS as IDs -> Can determine the location and time of servers creation
+	   - Allow any server to correctly determine whether a SERVER has been NEWLY CREATED or RETIRED
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+CREATION OF SERVERS:
+1) A server P to create itself as BAYOU SERVER:
+     - Sends a CREATE_WRITE to ANY other server Q.
+2) Receiving CREATE_WRITE:
+     - Treat it like a write form a CLIENT
+          - Assign an ACCEPT_STAMP <P_t>
+	  - Assign the server Id to be <Q>
+	  - Set COMMITTED = INFINITY
+	  - Add an entry to Q's VERSION VECTOR correspong to <P>
+3) USE of CREATION WRITE:
+     - informs other servers about the creation of <P> when it propogates in anti-entropy -------------> ADDS an entry to VERSION VECTOR for <P>
+     - <P> gets a globally unique server_ID that determines its TIME OF CREATION          -------------> <Time_Stamp, Q_id>
+
+4) New server uses <Time_Stamp + 1> to initialize its own accept_stamp counter ---------> Required for ALL WRITES ACCEPTED to follow the CREATION
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+RETIREMENT:
+1) To retire
+     - Send a RETIREMENT_WRITE to itself; --> May be call its own proccessMsg(RETIREMENT_WRITE)
+          - Stamp the write
+	  - At this point server will NO longer ACCEPT updates FROM CLIENTS
+     - Performs anti-entropy with AT LEAST ONE other server
+          - To propogate ALL its WRITES + RETIREMENT_WRITE
+
+2) Received RETIREMENT_WRITE:
+     - Remove the VERSION VECTOR ELEMENT corresponding to the retired server
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+LOGICALLY COMPLETE VERSION VECTORS:
+1) In Anti-Entropy Session, if the receiver's VERSION VECTOR does NOT contain the ENTRY of a SERVER:
+      - Is it because the SERVER RETIRED and the receiver REMOVED the entry?
+      - Is it because the RECEIVER never HEARD from that server?
+
+2) A server P may be ABSENT from the VERSION VECTOR of another server Q because
+      - Q NEVER HEADR of P
+      - Q knows that P was CREATED and RETIRED
+
+3) In ANTI-ENTRROPY, to detect ehy the ENTRY for S_i = <T_(k,i), S_k> is MISSING
+      if(R.V[S_k] >= T_(k, i)) {
+            R has seen CREATION and RETIREMENT of S_i;
+	    S no Need to SEND any NEW WRITES accepted by S_i to R;
+      }
+      else if(R.V[S_k] < T_(k,i)) {
+      	   R has not seen CREATION of S_i ==> So no RETIREMENT either
+	   S needs to SEND ALL WRITES ACCEPTED by S_i to R
+      }
+
+4) But...
+     - R's VERSIOn VECTOR may be MISSING entries for BOTH S_i and S_k ----------> PRECENSE of entry for S_k is NOT required
+     - Can use a CompleteV vector that EXTENDS the info stored in thw VERSION VECTOR to INCLUDE TIME_STAMP entries fors ALL POSSIBLE VECTORS.
+
+5) CompleteV(S_i = <T_(k,i), S_k>) {
+      if(V[S_i] != null) {
+            V(S_i)
+      }
+      else if(S_i == 0 ) { //FIRST SERVER
+      	   PLUS INFINITY;
+      }
+      else if(CompleteV(S_k) >= T_(k,i)) {
+      	   PLUS INFINITY;
+      }
+      else if(CompleteV(S_k) <= T_(k,i)) {
+      	   MINUS INFINITY;
+      }
+   }
+
+6) MINU INFINITY ==> Server has NOT yet seen CREATION of S_i;
+   PLUS INFINITY ==> Server has seen BOTH CREATION and RETIREMENT Writes
+   	-----------------------------------------------------------------------> Use CompletV to DETERMINE which WRITES to SEND during ANTI-ENTROPY
+
+7)  DYNAMIC MANAGEMENT OF VERSION VECTOR 
+      - Allows a server to create itself by CONTACTING ONE server for the DATABASE
+      - AFTER issuing the CREATE_WRITE, the NEW server SHOULD do ANTI-ENTROPY with the server that CREATED it
+      	      --> This will cause the NEW server to hold its own CREATE_WRITE in its log
+      
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  

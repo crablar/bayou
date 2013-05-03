@@ -32,21 +32,30 @@ public class VersionVector {
 			}
 		}
 	}
+	
+	public void addEntry(int sID, long init_stamp) {
+		vector.put(sID, init_stamp);
+	}
 
 	public void changeLatestAccept(int sID, long acceptStamp) {
 		vector.put(sID, acceptStamp);
 	}
 
 	public void changeifMax(int sID, long acceptStamp) {
-		if(vector.get(sID) == null) {
-			vector.put(sID, acceptStamp);
-		}
-		else if(vector.get(sID) < acceptStamp) {
+		if(vector.get(sID) < acceptStamp) {
 			vector.put(sID, acceptStamp);
 		}
 
 	}
+	
+	public boolean containsEntry(int sID) {
+		return vector.get(sID) != null;
+	}
 
+	public boolean remove(int sID) {
+		return vector.remove(sID) != null;
+	}
+	
 	public long getStamp(int sID) {
 		Long res = vector.get(sID);
 

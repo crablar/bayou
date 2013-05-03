@@ -26,7 +26,7 @@ public class Runner
 		System.out.println("Hello Chao.  Welcome to Bayou.");
 		
 		args = new String[1];	
-		args[0] = "bigentropy_script";
+		args[0] = "retirement_script";
 		
 		if(args == null)
 			scanner = new Scanner(System.in);
@@ -77,6 +77,10 @@ public class Runner
 	{
 		servers.get(sID).printLog();
 		System.out.println("-------------------------------------");
+	}
+	
+	private static void retire(Integer sID) {
+		servers.get(sID).retire();
 	}
 	
 	private static void isolate(Integer sID)
@@ -163,6 +167,8 @@ public class Runner
 	
 	private static void quit()
 	{
+		delay();
+		delay();
 		System.exit(0);
 	}
 
@@ -192,6 +198,8 @@ public class Runner
 				startClient(Integer.parseInt(cmdArgs[1]), Integer.parseInt(cmdArgs[2]));
 			else if(cmdArgs[0].equals("join"))
 				join(Integer.parseInt(cmdArgs[1]));
+			else if(cmdArgs[0].equals("retire"))
+				retire(Integer.parseInt(cmdArgs[1]));
 			else if(cmdArgs[0].equals("clientDisconnect"))
 				clientDisconnect(Integer.parseInt(cmdArgs[1]));
 			else if(cmdArgs[0].equals("clientReconnect"))
